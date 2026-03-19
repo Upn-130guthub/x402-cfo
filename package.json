@@ -14,6 +14,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "demo": "tsx examples/demo.ts",
     "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts",
     "prepublishOnly": "npm run build"
   },
