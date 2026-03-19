@@ -18,7 +18,16 @@
     "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["x402", "402", "ai-agent", "agent", "budget", "payments", "stablecoin", "USDC", "financial-controller", "agentic", "coinbase", "cfo", "ledger", "analytics"],
+  "keywords": ["x402", "402", "ai-agent", "agent", "budget", "payments", "stablecoin", "USDC", "financial-controller", "agentic", "coinbase", "cfo", "ledger", "analytics", "langchain", "crewai", "mcp", "model-context-protocol", "onchain", "base", "web3", "defi"],
+  "author": "x402-cfo Contributors",
+  "homepage": "https://upn-130guthub.github.io/x402-cfo/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Upn-130guthub/x402-cfo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Upn-130guthub/x402-cfo/issues"
+  },
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.5.2",
