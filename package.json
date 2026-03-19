@@ -1,11 +1,15 @@
 {
   "name": "x402-cfo",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Agent financial controller for x402 payments. Budget enforcement, cost policies, spend ledger, analytics, events, and persistent storage for AI agents.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -18,7 +22,30 @@
     "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["x402", "402", "ai-agent", "agent", "budget", "payments", "stablecoin", "USDC", "financial-controller", "agentic", "coinbase", "cfo", "ledger", "analytics", "langchain", "crewai", "mcp", "model-context-protocol", "onchain", "base", "web3", "defi"],
+  "keywords": [
+    "x402",
+    "402",
+    "ai-agent",
+    "agent",
+    "budget",
+    "payments",
+    "stablecoin",
+    "USDC",
+    "financial-controller",
+    "agentic",
+    "coinbase",
+    "cfo",
+    "ledger",
+    "analytics",
+    "langchain",
+    "crewai",
+    "mcp",
+    "model-context-protocol",
+    "onchain",
+    "base",
+    "web3",
+    "defi"
+  ],
   "author": "x402-cfo Contributors",
   "homepage": "https://upn-130guthub.github.io/x402-cfo/",
   "repository": {
