@@ -179,6 +179,37 @@ interface AgentWallet {
                                    emit denied     emit denied  emit failed
 ```
 
+## Framework integrations
+
+Pre-built adapters for LangChain, CrewAI, and MCP. Each creates 4 tools: `x402_fetch`, `x402_estimate_cost`, `x402_check_budget`, `x402_audit_ledger`.
+
+### LangChain
+
+```ts
+import { AgentCFO } from 'x402-cfo';
+import { createLangChainTools } from 'x402-cfo';
+
+const agent = new AgentCFO({ wallet, budget: { daily: 50 } });
+const tools = createLangChainTools(agent);
+// Pass tools to your LangChain agent executor
+```
+
+### CrewAI
+
+```ts
+import { createCrewAITools } from 'x402-cfo';
+const tools = createCrewAITools(agent);
+// Assign to CrewAI agents
+```
+
+### MCP (Model Context Protocol)
+
+```ts
+import { createMCPTools } from 'x402-cfo';
+const tools = createMCPTools(agent);
+// Register with your MCP server
+```
+
 ## Dashboard (Pro/Scale)
 
 The npm package works standalone forever. For teams running multiple agents, connect to the hosted dashboard with one line:
@@ -191,6 +222,7 @@ sync: { apiKey: 'your-api-key' }
 |---|---|---|---|
 | Budget + policies + ledger | ✅ | ✅ | ✅ |
 | Events + storage + analytics | ✅ | ✅ | ✅ |
+| Framework integrations | ✅ | ✅ | ✅ |
 | Dashboard — all agents in one view | — | ✅ | ✅ |
 | Alerts at 80% budget | — | ✅ | ✅ |
 | Kill switch — freeze spend remotely | — | — | ✅ |
@@ -202,8 +234,9 @@ sync: { apiKey: 'your-api-key' }
 npm test
 ```
 
-43 tests across 6 suites: budget, policy, controller, events, storage, and advanced integration.
+54 tests across 7 suites: budget, policy, controller, events, storage, advanced, and integrations.
 
 ## License
 
 MIT
+
