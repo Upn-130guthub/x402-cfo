@@ -6,3 +6,5 @@ export { Policy, type PolicyRules, type PolicyDecision, type PolicyDenialReason 
 export { Ledger, type LedgerEntry, type LedgerEntryStatus } from './ledger.js';
 export { Analytics, type SpendSummary } from './analytics.js';
 export { DashboardSync, type SyncConfig } from './sync.js';
+export { AgentEvents, type AgentEventMap } from './events.js';
+export { JsonFileStorage, type StorageAdapter } from './storage.js';

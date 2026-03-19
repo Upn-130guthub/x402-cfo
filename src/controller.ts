@@ -14,11 +14,13 @@
  *   const res = await agent.fetch('https://api.example.com/data');
  */
 
-import { Budget, type BudgetLimits } from './budget.js';
+import { Budget, type BudgetLimits, type BudgetStatus } from './budget.js';
 import { Ledger, type LedgerEntry } from './ledger.js';
 import { Policy, type PolicyRules } from './policy.js';
 import { Analytics, type SpendSummary } from './analytics.js';
 import { DashboardSync, type SyncConfig } from './sync.js';
+import { AgentEvents, type AgentEventMap } from './events.js';
+import type { StorageAdapter } from './storage.js';
 
 /** x402 payment requirement from a 402 response. */
 export interface X402PaymentRequirement {
@@ -60,6 +62,10 @@ export interface AgentCFOConfig {
   policy?: PolicyRules;
   /** Sync to hosted dashboard (paid feature). */
   sync?: SyncConfig;
+  /** Persistent storage adapter for ledger data. */
+  storage?: StorageAdapter;
+  /** Budget warning threshold (0-1). Default: 0.8 (80%). */
+  warningThreshold?: number;
   /** Custom fetch implementation (defaults to globalThis.fetch). */
   fetchImpl?: typeof fetch;
 }
@@ -71,7 +77,13 @@ export class AgentCFO {
   private ledger: Ledger;
   private analytics: Analytics;
   private sync: DashboardSync | null;
+  private storage: StorageAdapter | null;
+  private warningThreshold: number;
   private fetchImpl: typeof fetch;
+  /** Typed event emitter — subscribe to payment, budget, and velocity events. */
+  public events: AgentEvents;
+  /** Historical cost per endpoint (for cost estimation). */
+  private costHistory: Map<string, number[]> = new Map();
 
   constructor(config: AgentCFOConfig) {
     this.wallet = config.wallet;
@@ -79,10 +91,27 @@ export class AgentCFO {
     this.policy = new Policy(config.policy);
     this.ledger = new Ledger();
     this.analytics = new Analytics(this.ledger);
+    this.events = new AgentEvents();
     this.sync = config.sync
       ? new DashboardSync(config.sync, () => this.budget.status(), () => this.analytics.summary())
       : null;
+    this.storage = config.storage ?? null;
+    this.warningThreshold = config.warningThreshold ?? 0.8;
     this.fetchImpl = config.fetchImpl ?? globalThis.fetch;
+
+    // Load persisted ledger entries
+    if (this.storage) {
+      const loaded = this.storage.load();
+      if (Array.isArray(loaded)) {
+        for (const entry of loaded) {
+          this.ledger.record(entry);
+          if (entry.status === 'paid') {
+            this.budget.record(parseFloat(entry.amount));
+            this.trackCost(entry.url, parseFloat(entry.amount));
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -169,7 +198,7 @@ export class AgentCFO {
   }
 
   /** Get current budget status. */
-  spent(): ReturnType<Budget['status']> {
+  spent(): BudgetStatus {
     return this.budget.status();
   }
 
@@ -193,9 +222,84 @@ export class AgentCFO {
     return this.ledger.toCSV();
   }
 
-  /** Stop dashboard sync (call on agent shutdown). */
+  /**
+   * Estimate the cost of calling a URL based on historical data.
+   * Returns null if no history exists for this endpoint.
+   */
+  estimateCost(url: string): { average: number; min: number; max: number; samples: number } | null {
+    const host = this.extractHost(url);
+    const history = this.costHistory.get(host);
+    if (!history || history.length === 0) return null;
+    const sum = history.reduce((a, b) => a + b, 0);
+    return {
+      average: sum / history.length,
+      min: Math.min(...history),
+      max: Math.max(...history),
+      samples: history.length,
+    };
+  }
+
+  /** Stop dashboard sync and event handlers (call on agent shutdown). */
   stop(): void {
     this.sync?.stop();
+    this.events.clear();
+  }
+
+  // ---- Internal helpers ----
+
+  private extractHost(url: string): string {
+    try { return new URL(url).hostname; } catch { return url; }
+  }
+
+  private trackCost(url: string, amount: number): void {
+    const host = this.extractHost(url);
+    if (!this.costHistory.has(host)) this.costHistory.set(host, []);
+    const history = this.costHistory.get(host)!;
+    history.push(amount);
+    // Keep last 100 data points per host
+    if (history.length > 100) history.shift();
+  }
+
+  private checkBudgetWarnings(): void {
+    const status = this.budget.status();
+    const checks: { window: string; spent: string; limit: string | undefined }[] = [
+      { window: 'hourly', spent: status.hourlySpent, limit: status.hourlyRemaining ? String(parseFloat(status.hourlySpent) + parseFloat(status.hourlyRemaining)) : undefined },
+      { window: 'daily', spent: status.dailySpent, limit: status.dailyRemaining ? String(parseFloat(status.dailySpent) + parseFloat(status.dailyRemaining)) : undefined },
+      { window: 'session', spent: status.sessionSpent, limit: status.sessionRemaining ? String(parseFloat(status.sessionSpent) + parseFloat(status.sessionRemaining)) : undefined },
+    ];
+
+    for (const { window, spent, limit } of checks) {
+      if (!limit || limit === '0') continue;
+      const pct = parseFloat(spent) / parseFloat(limit);
+      if (pct >= 1.0) {
+        this.events.emit('budget:exhausted', { status, window });
+      } else if (pct >= this.warningThreshold) {
+        this.events.emit('budget:warning', { status, window, percentUsed: pct });
+      }
+    }
+  }
+
+  private checkVelocity(): void {
+    const summary = this.analytics.summary();
+    if (summary.totalTransactions < 5) return; // Need enough data points
+
+    const recent = this.ledger.all()
+      .filter(e => e.status === 'paid')
+      .slice(-10)
+      .map(e => parseFloat(e.amount));
+
+    if (recent.length < 3) return;
+
+    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
+    const overallAvg = parseFloat(summary.totalSpent) / summary.totalTransactions;
+
+    if (overallAvg > 0 && recentAvg > overallAvg * 2) {
+      this.events.emit('velocity:spike', {
+        currentRate: recentAvg,
+        averageRate: overallAvg,
+        multiplier: recentAvg / overallAvg,
+      });
+    }
   }
 
   // ---- Internal logging ----
@@ -208,6 +312,11 @@ export class AgentCFO {
     };
     this.ledger.record(entry);
     this.sync?.push(entry);
+    this.storage?.append(entry);
+    this.trackCost(url, parseFloat(amount));
+    this.events.emit('payment:success', { entry });
+    this.checkBudgetWarnings();
+    this.checkVelocity();
   }
 
   private logDenied(url: string, amount: string, currency: string, network: string, reason: string): void {
@@ -218,6 +327,8 @@ export class AgentCFO {
     };
     this.ledger.record(entry);
     this.sync?.push(entry);
+    this.storage?.append(entry);
+    this.events.emit('payment:denied', { entry });
   }
 
   private logFailed(url: string, amount: string, currency: string, network: string, reason: string): void {
@@ -228,5 +339,8 @@ export class AgentCFO {
     };
     this.ledger.record(entry);
     this.sync?.push(entry);
+    this.storage?.append(entry);
+    this.events.emit('payment:failed', { entry });
   }
 }
+
