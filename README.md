@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/x402-cfo?style=flat-square&color=f5a623)](https://npmjs.com/package/x402-cfo)
 [![license](https://img.shields.io/npm/l/x402-cfo?style=flat-square)](LICENSE)
 [![zero deps](https://img.shields.io/badge/dependencies-0-10b981?style=flat-square)](package.json)
-[![tests](https://img.shields.io/badge/tests-43%2F43-10b981?style=flat-square)](#tests)
+[![tests](https://img.shields.io/badge/tests-54%2F54-10b981?style=flat-square)](#tests)
 
 **Agent financial controller for x402 payments.**
 
