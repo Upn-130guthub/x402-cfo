@@ -181,34 +181,125 @@ interface AgentWallet {
 
 ## Framework integrations
 
-Pre-built adapters for LangChain, CrewAI, and MCP. Each creates 4 tools: `x402_fetch`, `x402_estimate_cost`, `x402_check_budget`, `x402_audit_ledger`.
+Pre-built adapters for **LangChain**, **CrewAI**, and **MCP**. Each creates 4 tools that give any AI agent financial awareness:
+
+| Tool | What it does |
+|---|---|
+| `x402_fetch` | Make an HTTP request with automatic x402 payment handling |
+| `x402_estimate_cost` | Predict cost of an endpoint based on historical data |
+| `x402_check_budget` | Check remaining budget before committing to a task |
+| `x402_audit_ledger` | Review all past payments and denials |
 
 ### LangChain
 
-```ts
-import { AgentCFO } from 'x402-cfo';
-import { createLangChainTools } from 'x402-cfo';
+Give a LangChain agent a budget and let it make autonomous paid API calls:
 
-const agent = new AgentCFO({ wallet, budget: { daily: 50 } });
-const tools = createLangChainTools(agent);
-// Pass tools to your LangChain agent executor
+```ts
+import { AgentCFO, JsonFileStorage } from 'x402-cfo';
+import { createLangChainTools } from 'x402-cfo';
+import { ChatOpenAI } from '@langchain/openai';
+import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
+
+// 1. Create the CFO — this controls ALL spending
+const cfo = new AgentCFO({
+  wallet: myX402Wallet,
+  budget: { hourly: 5, daily: 50, session: 200 },
+  policy: { maxPerRequest: 2.00, allowedCurrencies: ['USDC'] },
+  storage: new JsonFileStorage('./langchain-agent-ledger.json'),
+});
+
+// 2. Wire alerts — know when spending gets hot
+cfo.events.on('budget:warning', ({ window, percentUsed }) => {
+  console.warn(`⚠️  ${window} budget at ${(percentUsed * 100).toFixed(0)}%`);
+});
+
+// 3. Create LangChain tools from the CFO
+const tools = createLangChainTools(cfo);
+
+// 4. Give them to the agent
+const llm = new ChatOpenAI({ modelName: 'gpt-4' });
+const agent = await createOpenAIFunctionsAgent({ llm, tools, prompt });
+const executor = new AgentExecutor({ agent, tools });
+
+// 5. The agent can now autonomously:
+//    - Fetch paid APIs (x402_fetch)
+//    - Check if it can afford an endpoint (x402_estimate_cost)
+//    - Monitor its own spending (x402_check_budget)
+//    - Review what it's paid for (x402_audit_ledger)
+const result = await executor.invoke({
+  input: 'Get the latest market data and sentiment analysis, but stay under $2 total',
+});
+
+// 6. After the run — full financial audit
+console.log(cfo.summary());
+// → { totalSpent: "1.45", burnRatePerMinute: "0.24", projectedDaily: "345.60" }
 ```
 
 ### CrewAI
 
+Give a CrewAI crew shared budget control — each agent checks before spending:
+
 ```ts
+import { AgentCFO } from 'x402-cfo';
 import { createCrewAITools } from 'x402-cfo';
-const tools = createCrewAITools(agent);
-// Assign to CrewAI agents
+
+const cfo = new AgentCFO({
+  wallet: myX402Wallet,
+  budget: { session: 10 },
+  policy: { maxPerRequest: 1.00, allowedCurrencies: ['USDC'] },
+});
+
+// CrewAI tools — same 4 tools, CrewAI-compatible format
+const tools = createCrewAITools(cfo);
+
+// Assign to any agent in the crew — they all share the same budget
+// If the researcher blows $8, the writer only has $2 left
+const researcher = { tools, role: 'Market Researcher', ... };
+const writer     = { tools, role: 'Report Writer', ... };
 ```
 
 ### MCP (Model Context Protocol)
 
+Register x402-cfo as an MCP tool provider — any MCP-compatible AI client (Claude Desktop, custom agents) gets financial controls:
+
 ```ts
+import { AgentCFO } from 'x402-cfo';
 import { createMCPTools } from 'x402-cfo';
-const tools = createMCPTools(agent);
-// Register with your MCP server
+
+const cfo = new AgentCFO({
+  wallet: myX402Wallet,
+  budget: { daily: 25 },
+  policy: { maxPerRequest: 0.50, allowedCurrencies: ['USDC'] },
+});
+
+const mcpTools = createMCPTools(cfo);
+
+// Register with your MCP server — each tool has:
+// { name, description, inputSchema, handler }
+for (const tool of mcpTools) {
+  mcpServer.registerTool(tool.name, {
+    description: tool.description,
+    inputSchema: tool.inputSchema,
+    handler: tool.handler,
+  });
+}
+
+// Now any MCP client can call:
+// x402_fetch({ url: "https://api.paid-data.com/prices" })
+// x402_check_budget({})
+// x402_estimate_cost({ url: "https://api.paid-data.com/prices" })
+// x402_audit_ledger({})
 ```
+
+### Running the demo
+
+See the full SDK in action without any framework dependency:
+
+```bash
+npm run demo
+```
+
+This runs a simulated agent making 6 x402 API calls, hitting budget limits, and showing the complete flow.
 
 ## Dashboard (Pro/Scale)
 
