@@ -1,7 +1,7 @@
 {
   "name": "x402-cfo",
   "version": "0.1.0",
-  "description": "Agent financial controller for x402 payments. Budget enforcement, cost policies, spend ledger, and analytics for AI agents.",
+  "description": "Agent financial controller for x402 payments. Budget enforcement, cost policies, spend ledger, analytics, events, and persistent storage for AI agents.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -14,22 +14,13 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch examples/demo/server.ts",
-    "example": "tsx examples/basic/server.ts",
-    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts",
+    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["x402", "402", "ai-agent", "agent", "budget", "payments", "stablecoin", "USDC", "financial-controller", "agentic", "coinbase"],
+  "keywords": ["x402", "402", "ai-agent", "agent", "budget", "payments", "stablecoin", "USDC", "financial-controller", "agentic", "coinbase", "cfo", "ledger", "analytics"],
   "license": "MIT",
-  "peerDependencies": {
-    "express": ">=4.0.0"
-  },
   "devDependencies": {
-    "@types/express": "^5.0.1",
     "@types/node": "^24.5.2",
-    "cors": "^2.8.5",
-    "@types/cors": "^2.8.17",
-    "express": "^4.21.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
