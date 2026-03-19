@@ -293,24 +293,28 @@
       <div class="code-tabs">
         <div class="code-tab active">agent.ts</div>
       </div>
-      <pre class="code-pre"><span class="kw">import</span> { AgentCFO } <span class="kw">from</span> <span class="str">'x402-cfo'</span>;
+      <pre class="code-pre"><span class="kw">import</span> { AgentCFO, JsonFileStorage } <span class="kw">from</span> <span class="str">'x402-cfo'</span>;
 
 <span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">AgentCFO</span>({
   wallet: myX402Wallet,
   budget: { hourly: <span class="num">5</span>, daily: <span class="num">50</span>, session: <span class="num">200</span> },
-  policy: {
-    maxPerRequest: <span class="num">2.00</span>,
-    allowedCurrencies: [<span class="str">'USDC'</span>],
-    blocklist: [<span class="str">'api.untrusted.com'</span>],
-  },
+  policy: { maxPerRequest: <span class="num">2.00</span>, allowedCurrencies: [<span class="str">'USDC'</span>] },
+  storage: <span class="kw">new</span> <span class="fn">JsonFileStorage</span>(<span class="str">'./ledger.json'</span>), <span class="cm">// Survive restarts</span>
+});
+
+<span class="cm">// React to financial events</span>
+agent.events.<span class="fn">on</span>(<span class="str">'budget:warning'</span>, ({ window, percentUsed }) =&gt; {
+  console.<span class="fn">warn</span>(<span class="str">`⚠️ ${window} budget at ${(percentUsed * 100).toFixed(0)}%`</span>);
+});
+agent.events.<span class="fn">on</span>(<span class="str">'velocity:spike'</span>, ({ multiplier }) =&gt; {
+  console.<span class="fn">warn</span>(<span class="str">`🔥 Spending ${multiplier.toFixed(1)}x above average`</span>);
 });
 
 <span class="cm">// Drop-in fetch — auto-handles 402 → policy → budget → pay → log</span>
 <span class="kw">const</span> res = <span class="kw">await</span> agent.<span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>);
 
-agent.<span class="fn">spent</span>();    <span class="cm">// { sessionSpent: "4.25", hourlyRemaining: "0.75" }</span>
-agent.<span class="fn">summary</span>(); <span class="cm">// { burnRatePerMinute: "0.12", projectedDaily: "172.80" }</span>
-agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — every decision with reason, exportable</span></pre>
+agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.example.com/data'</span>);
+<span class="cm">// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }</span></pre>
     </div>
   </div>
 </section>
@@ -374,6 +378,10 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
         <tr><td>Currency & network restrictions</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Full audit ledger</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Burn rate & projected spend</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Typed event system</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Persistent storage</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Cost estimation</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Velocity spike detection</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>CSV / JSON export</td><td class="cross">—</td><td class="check">✓</td></tr>
       </tbody>
     </table>
@@ -403,6 +411,26 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
         <div class="feat-desc">Every payment decision logged with timestamp, amount, URL, status, and reason. Exportable.</div>
       </div>
       <div class="feat-card">
+        <div class="feat-icon">⚡</div>
+        <div class="feat-title">Event System</div>
+        <div class="feat-desc">Typed events for payment success, denial, budget warnings, and velocity spikes. Wire up Slack alerts or circuit breakers.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">💾</div>
+        <div class="feat-title">Persistent Storage</div>
+        <div class="feat-desc">Ledger survives restarts. Ships with JsonFileStorage, pluggable StorageAdapter for SQLite or Redis.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔮</div>
+        <div class="feat-title">Cost Estimation</div>
+        <div class="feat-desc">Learns what endpoints cost from history. Query average, min, max before making a call.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🔥</div>
+        <div class="feat-title">Velocity Detection</div>
+        <div class="feat-desc">Fires an event when spending 2x+ above the historical average. Catch runaway agents before they burn budget.</div>
+      </div>
+      <div class="feat-card">
         <div class="feat-icon">📊</div>
         <div class="feat-title">Spend Analytics</div>
         <div class="feat-desc">Burn rate, projected daily spend, top endpoints by cost, and currency breakdown.</div>
@@ -410,12 +438,7 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
       <div class="feat-card">
         <div class="feat-icon">🔌</div>
         <div class="feat-title">Wallet Agnostic</div>
-        <div class="feat-desc">Simple AgentWallet interface — works with any x402 payment provider or chain.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🔒</div>
-        <div class="feat-title">TypeScript Native</div>
-        <div class="feat-desc">Full type safety. Everything exported with JSDoc. Zero casts, zero any.</div>
+        <div class="feat-desc">Simple AgentWallet interface — works with any x402 payment provider or chain. Zero dependencies.</div>
       </div>
     </div>
   </div>
