@@ -18,6 +18,7 @@ import { Budget, type BudgetLimits } from './budget.js';
 import { Ledger, type LedgerEntry } from './ledger.js';
 import { Policy, type PolicyRules } from './policy.js';
 import { Analytics, type SpendSummary } from './analytics.js';
+import { DashboardSync, type SyncConfig } from './sync.js';
 
 /** x402 payment requirement from a 402 response. */
 export interface X402PaymentRequirement {
@@ -57,6 +58,8 @@ export interface AgentCFOConfig {
   budget?: BudgetLimits;
   /** Cost policy rules. */
   policy?: PolicyRules;
+  /** Sync to hosted dashboard (paid feature). */
+  sync?: SyncConfig;
   /** Custom fetch implementation (defaults to globalThis.fetch). */
   fetchImpl?: typeof fetch;
 }
@@ -67,6 +70,7 @@ export class AgentCFO {
   private policy: Policy;
   private ledger: Ledger;
   private analytics: Analytics;
+  private sync: DashboardSync | null;
   private fetchImpl: typeof fetch;
 
   constructor(config: AgentCFOConfig) {
@@ -75,6 +79,9 @@ export class AgentCFO {
     this.policy = new Policy(config.policy);
     this.ledger = new Ledger();
     this.analytics = new Analytics(this.ledger);
+    this.sync = config.sync
+      ? new DashboardSync(config.sync, () => this.budget.status(), () => this.analytics.summary())
+      : null;
     this.fetchImpl = config.fetchImpl ?? globalThis.fetch;
   }
 
@@ -186,29 +193,40 @@ export class AgentCFO {
     return this.ledger.toCSV();
   }
 
+  /** Stop dashboard sync (call on agent shutdown). */
+  stop(): void {
+    this.sync?.stop();
+  }
+
   // ---- Internal logging ----
 
   private logPaid(url: string, amount: string, currency: string, network: string, reason: string, httpStatus?: number, challengeId?: string): void {
-    this.ledger.record({
+    const entry: LedgerEntry = {
       timestamp: new Date().toISOString(),
       url, amount, currency, network,
       status: 'paid', reason, httpStatus, challengeId,
-    });
+    };
+    this.ledger.record(entry);
+    this.sync?.push(entry);
   }
 
   private logDenied(url: string, amount: string, currency: string, network: string, reason: string): void {
-    this.ledger.record({
+    const entry: LedgerEntry = {
       timestamp: new Date().toISOString(),
       url, amount, currency, network,
       status: 'denied', reason, httpStatus: 402,
-    });
+    };
+    this.ledger.record(entry);
+    this.sync?.push(entry);
   }
 
   private logFailed(url: string, amount: string, currency: string, network: string, reason: string): void {
-    this.ledger.record({
+    const entry: LedgerEntry = {
       timestamp: new Date().toISOString(),
       url, amount, currency, network,
       status: 'failed', reason, httpStatus: 402,
-    });
+    };
+    this.ledger.record(entry);
+    this.sync?.push(entry);
   }
 }

@@ -206,6 +206,24 @@
     .feat-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; }
     .feat-desc { font-size: 13px; color: var(--txt3); line-height: 1.5; }
 
+    /* ===== PRICING ===== */
+    .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+    .price-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 32px 24px; text-align: left;
+      backdrop-filter: blur(12px); display: flex; flex-direction: column;
+    }
+    .price-card.featured {
+      border-color: var(--amber); box-shadow: 0 0 32px rgba(245,166,35,0.08);
+    }
+    .price-tier { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--amber); margin-bottom: 8px; }
+    .price-amount { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 4px; }
+    .price-amount span { font-size: 14px; font-weight: 500; color: var(--txt3); }
+    .price-desc { font-size: 13px; color: var(--txt3); margin-bottom: 20px; }
+    .price-list { list-style: none; flex: 1; margin-bottom: 24px; }
+    .price-list li { font-size: 13px; color: var(--txt2); padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .price-list li::before { content: '✓ '; color: var(--green); font-weight: 700; }
+
     /* ===== CTA ===== */
     .cta-section { text-align: center; padding: 100px 0; }
     .cta-section h2 { margin-bottom: 12px; }
@@ -225,6 +243,7 @@
     @media (max-width: 768px) {
       .flow-grid { grid-template-columns: 1fr 1fr; }
       .feat-grid { grid-template-columns: 1fr; }
+      .price-grid { grid-template-columns: 1fr; }
       .hero { padding: 60px 0 50px; }
       .flow-arrow { display: none; }
       .nav-links a:not(.nav-cta) { display: none; }
@@ -397,6 +416,68 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
         <div class="feat-icon">🔒</div>
         <div class="feat-title">TypeScript Native</div>
         <div class="feat-desc">Full type safety. Everything exported with JSDoc. Zero casts, zero any.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing">
+  <div class="w" style="text-align:center">
+    <div class="section-label">Pricing</div>
+    <h2>Free to run. Paid to watch.</h2>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">The npm package works standalone forever. The dashboard gives you centralized control.</p>
+    <div class="price-grid">
+      <div class="price-card">
+        <div class="price-tier">Free</div>
+        <div class="price-amount">$0<span>/forever</span></div>
+        <div class="price-desc">For solo developers</div>
+        <ul class="price-list">
+          <li>Unlimited agents</li>
+          <li>Budget enforcement</li>
+          <li>Cost policies</li>
+          <li>Local audit ledger</li>
+          <li>JSON + CSV export</li>
+        </ul>
+        <a href="https://npmjs.com/package/x402-cfo" class="btn btn-ghost" style="width:100%;text-align:center">npm install</a>
+      </div>
+      <div class="price-card featured">
+        <div class="price-tier">Pro</div>
+        <div class="price-amount">$49<span>/mo</span></div>
+        <div class="price-desc">For teams running agents</div>
+        <ul class="price-list">
+          <li>Everything in Free</li>
+          <li>Dashboard — all agents in one view</li>
+          <li>Alerts when budgets hit 80%</li>
+          <li>30-day ledger history</li>
+          <li>Up to 10 agents</li>
+        </ul>
+        <a href="#" class="btn btn-primary" style="width:100%;text-align:center">Coming soon</a>
+      </div>
+      <div class="price-card">
+        <div class="price-tier">Scale</div>
+        <div class="price-amount">$199<span>/mo</span></div>
+        <div class="price-desc">For enterprises</div>
+        <ul class="price-list">
+          <li>Everything in Pro</li>
+          <li>Kill switch — freeze spend remotely</li>
+          <li>Compliance audit reports</li>
+          <li>Unlimited agents</li>
+          <li>1-year ledger history</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" style="width:100%;text-align:center">Contact us</a>
+      </div>
+    </div>
+
+    <div style="margin-top:48px;text-align:left;max-width:720px;margin-left:auto;margin-right:auto">
+      <p style="font-size:13px;color:var(--txt3);margin-bottom:12px;font-weight:600">One line to connect:</p>
+      <div class="code-block">
+        <pre class="code-pre"><span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">AgentCFO</span>({
+  wallet: myWallet,
+  budget: { hourly: <span class="num">5</span>, daily: <span class="num">50</span> },
+  <span class="cm">// Add this line to sync to the dashboard:</span>
+  sync: { apiKey: <span class="str">'your-api-key'</span> },
+});</pre>
       </div>
     </div>
   </div>
