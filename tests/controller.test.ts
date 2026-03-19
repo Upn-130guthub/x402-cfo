@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TollboothAgent, type AgentWallet, type X402Challenge } from '../src/controller.js';
+import { AgentCFO, type AgentWallet, type X402Challenge } from '../src/controller.js';
 
 /**
  * End-to-end controller tests.
@@ -41,7 +41,7 @@ const mockWallet: AgentWallet = {
 };
 
 test('controller: passes through non-402 responses', async () => {
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     fetchImpl: async () => make200Response(),
   });
@@ -52,7 +52,7 @@ test('controller: passes through non-402 responses', async () => {
 
 test('controller: handles 402 → pay → 200 flow', async () => {
   let callCount = 0;
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     fetchImpl: async () => {
       callCount++;
@@ -70,7 +70,7 @@ test('controller: handles 402 → pay → 200 flow', async () => {
 });
 
 test('controller: denies when policy blocks', async () => {
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     policy: { maxPerRequest: 0.10 },
     fetchImpl: async () => make402Response('0.25'),
@@ -85,7 +85,7 @@ test('controller: denies when policy blocks', async () => {
 
 test('controller: denies when budget exhausted', async () => {
   let callCount = 0;
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     budget: { session: 0.40 },
     fetchImpl: async () => {
@@ -110,7 +110,7 @@ test('controller: logs wallet failures', async () => {
     pay: async () => { throw new Error('Insufficient funds'); },
   };
 
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: failWallet,
     fetchImpl: async () => make402Response(),
   });
@@ -124,7 +124,7 @@ test('controller: logs wallet failures', async () => {
 
 test('controller: exports ledger as JSON', async () => {
   let callCount = 0;
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     fetchImpl: async () => {
       callCount++;
@@ -141,7 +141,7 @@ test('controller: exports ledger as JSON', async () => {
 
 test('controller: summary reports correct analytics', async () => {
   let callCount = 0;
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: mockWallet,
     fetchImpl: async () => {
       callCount++;
@@ -167,7 +167,7 @@ test('controller: blocklisted URL is denied without calling wallet', async () =>
     pay: async (params) => { walletCalled = true; return 'paid'; },
   };
 
-  const agent = new TollboothAgent({
+  const agent = new AgentCFO({
     wallet: trackWallet,
     policy: { blocklist: ['api.evil.com'] },
     fetchImpl: async () => make402Response(),

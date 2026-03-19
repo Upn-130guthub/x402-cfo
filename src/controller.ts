@@ -1,12 +1,12 @@
 /**
- * TollboothAgent — the agent financial controller.
+ * AgentCFO — the agent financial controller.
  *
  * Wraps `fetch` and intercepts x402 (402 Payment Required) responses.
  * Before paying, checks policy → budget → decides. After paying,
  * logs to ledger → updates budget. Provides analytics on demand.
  *
  * Usage:
- *   const agent = new TollboothAgent({
+ *   const agent = new AgentCFO({
  *     wallet: { pay: async (req) => paymentHeader },
  *     budget: { hourly: 5, daily: 50 },
  *     policy: { maxPerRequest: 2.00 },
@@ -50,7 +50,7 @@ export interface AgentWallet {
   }): Promise<string>;
 }
 
-export interface TollboothAgentConfig {
+export interface AgentCFOConfig {
   /** Wallet that can sign x402 payments. */
   wallet: AgentWallet;
   /** Budget limits. */
@@ -61,7 +61,7 @@ export interface TollboothAgentConfig {
   fetchImpl?: typeof fetch;
 }
 
-export class TollboothAgent {
+export class AgentCFO {
   private wallet: AgentWallet;
   private budget: Budget;
   private policy: Policy;
@@ -69,7 +69,7 @@ export class TollboothAgent {
   private analytics: Analytics;
   private fetchImpl: typeof fetch;
 
-  constructor(config: TollboothAgentConfig) {
+  constructor(config: AgentCFOConfig) {
     this.wallet = config.wallet;
     this.budget = new Budget(config.budget);
     this.policy = new Policy(config.policy);

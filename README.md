@@ -1,7 +1,7 @@
-# Tollbooth 🚧
+# x402-cfo 🏦
 
-[![npm](https://img.shields.io/npm/v/tollbooth?style=flat-square&color=f5a623)](https://npmjs.com/package/tollbooth)
-[![license](https://img.shields.io/npm/l/tollbooth?style=flat-square)](LICENSE)
+[![npm](https://img.shields.io/npm/v/x402-cfo?style=flat-square&color=f5a623)](https://npmjs.com/package/x402-cfo)
+[![license](https://img.shields.io/npm/l/x402-cfo?style=flat-square)](LICENSE)
 [![zero deps](https://img.shields.io/badge/dependencies-0-10b981?style=flat-square)](package.json)
 
 **Agent financial controller for x402 payments.**
@@ -9,9 +9,9 @@
 Budget enforcement, cost policies, spend ledger, and analytics for AI agents making autonomous on-chain payments via the [x402 protocol](https://www.x402.org/).
 
 ```ts
-import { TollboothAgent } from 'tollbooth';
+import { AgentCFO } from 'x402-cfo';
 
-const agent = new TollboothAgent({
+const agent = new AgentCFO({
   wallet: myX402Wallet,
   budget: { hourly: 5, daily: 50, session: 200 },
   policy: {
@@ -33,13 +33,13 @@ console.log(agent.summary());  // { burnRatePerMinute: "0.12", projectedDaily: "
 console.log(agent.audit());    // [ { status: "paid", amount: "0.25", url: "...", reason: "..." }, ... ]
 ```
 
-## Why Tollbooth?
+## Why x402-cfo?
 
 The x402 protocol has client libraries (`x402-fetch`, `x402-axios`) that handle the 402→pay→retry flow. But they have zero opinions about **how much** an agent should spend, **where** it should spend, or **tracking** what it spent.
 
-`x402-fetch` is the wallet. **Tollbooth is the CFO.**
+`x402-fetch` is the wallet. **x402-cfo is the CFO.**
 
-| | x402-fetch | Tollbooth |
+| | x402-fetch | x402-cfo |
 |---|---|---|
 | Auto-pay on 402 | ✅ | ✅ |
 | Budget limits | ❌ | ✅ per-request, hourly, daily, session |
@@ -51,12 +51,12 @@ The x402 protocol has client libraries (`x402-fetch`, `x402-axios`) that handle 
 ## Install
 
 ```bash
-npm install tollbooth
+npm install x402-cfo
 ```
 
 ## API
 
-### `new TollboothAgent(config)`
+### `new AgentCFO(config)`
 
 | Option | Type | Description |
 |---|---|---|

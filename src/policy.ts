@@ -1,5 +1,5 @@
 /**
- * Cost policy engine for Tollbooth agent.
+ * Cost policy engine for x402-cfo agent.
  *
  * Declarative rules that determine whether a payment should be made.
  * Policies are checked BEFORE budget enforcement — a policy denial

@@ -1,5 +1,5 @@
 /**
- * Budget manager for Tollbooth agent.
+ * Budget manager for x402-cfo agent.
  *
  * Enforces spending limits across multiple time windows (per-request,
  * hourly, daily, session). Uses a rolling-window ledger to track

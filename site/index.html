@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tollbooth — Agent Financial Controller for x402 Payments</title>
-  <meta name="description" content="Budget enforcement, cost policies, spend ledger, and analytics for AI agents making autonomous x402 payments. x402-fetch is the wallet. Tollbooth is the CFO." />
+  <title>x402-cfo — Agent Financial Controller for x402 Payments</title>
+  <meta name="description" content="Budget enforcement, cost policies, spend ledger, and analytics for AI agents making autonomous x402 payments. x402-fetch is the wallet. x402-cfo is the CFO." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -242,13 +242,13 @@
 <!-- NAV -->
 <nav>
   <div class="w nav-inner">
-    <div class="nav-logo">Tollbooth</div>
+    <div class="nav-logo">x402-cfo</div>
     <div class="nav-links">
       <a href="#how">How it works</a>
-      <a href="#compare">Why Tollbooth</a>
+      <a href="#compare">Why x402-cfo</a>
       <a href="#features">Features</a>
-      <a href="https://github.com/tollbooth/tollbooth">GitHub</a>
-      <a href="https://npmjs.com/package/tollbooth" class="nav-cta">npm install</a>
+      <a href="https://github.com/x402-cfo/x402-cfo">GitHub</a>
+      <a href="https://npmjs.com/package/x402-cfo" class="nav-cta">npm install</a>
     </div>
   </div>
 </nav>
@@ -259,10 +259,10 @@
     <div class="hero-badge">Agent Financial Controller</div>
     <h1>Your AI agent<br/>needs a <span>CFO</span>.</h1>
     <p class="hero-sub">Budget enforcement, cost policies, and a complete audit trail for AI agents making autonomous x402 payments. Drop-in fetch replacement.</p>
-    <p class="hero-tagline">x402-fetch is the wallet. Tollbooth is the CFO.</p>
+    <p class="hero-tagline">x402-fetch is the wallet. x402-cfo is the CFO.</p>
     <div class="hero-actions">
-      <a href="https://npmjs.com/package/tollbooth" class="btn btn-primary">npm install tollbooth</a>
-      <a href="https://github.com/tollbooth/tollbooth" class="btn btn-ghost">View on GitHub</a>
+      <a href="https://npmjs.com/package/x402-cfo" class="btn btn-primary">npm install x402-cfo</a>
+      <a href="https://github.com/x402-cfo/x402-cfo" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
 </section>
@@ -274,9 +274,9 @@
       <div class="code-tabs">
         <div class="code-tab active">agent.ts</div>
       </div>
-      <pre class="code-pre"><span class="kw">import</span> { TollboothAgent } <span class="kw">from</span> <span class="str">'tollbooth'</span>;
+      <pre class="code-pre"><span class="kw">import</span> { AgentCFO } <span class="kw">from</span> <span class="str">'x402-cfo'</span>;
 
-<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">TollboothAgent</span>({
+<span class="kw">const</span> agent = <span class="kw">new</span> <span class="fn">AgentCFO</span>({
   wallet: myX402Wallet,
   budget: { hourly: <span class="num">5</span>, daily: <span class="num">50</span>, session: <span class="num">200</span> },
   policy: {
@@ -339,12 +339,12 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
 <!-- COMPARISON -->
 <section class="section" id="compare">
   <div class="w" style="text-align:center">
-    <div class="section-label">Why Tollbooth</div>
-    <h2>x402-fetch is the wallet.<br/>Tollbooth is the CFO.</h2>
-    <p class="section-sub" style="margin-left:auto;margin-right:auto">Client libraries handle payment plumbing. Tollbooth handles financial control.</p>
+    <div class="section-label">Why x402-cfo</div>
+    <h2>x402-fetch is the wallet.<br/>x402-cfo is the CFO.</h2>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">Client libraries handle payment plumbing. x402-cfo handles financial control.</p>
     <table class="compare-table">
       <thead>
-        <tr><th></th><th>x402-fetch</th><th>Tollbooth</th></tr>
+        <tr><th></th><th>x402-fetch</th><th>x402-cfo</th></tr>
       </thead>
       <tbody>
         <tr><td>Auto-pay on 402</td><td class="check">✓</td><td class="check">✓</td></tr>
@@ -406,10 +406,10 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
 <section class="cta-section">
   <div class="w">
     <h2>Your agent is spending money.<br/>Shouldn't someone be watching?</h2>
-    <p>Install Tollbooth. Give your agent a budget, a policy, and a ledger.</p>
+    <p>Install x402-cfo. Give your agent a budget, a policy, and a ledger.</p>
     <div class="hero-actions">
-      <a href="https://npmjs.com/package/tollbooth" class="btn btn-primary">npm install tollbooth</a>
-      <a href="https://github.com/tollbooth/tollbooth" class="btn btn-ghost">View on GitHub</a>
+      <a href="https://npmjs.com/package/x402-cfo" class="btn btn-primary">npm install x402-cfo</a>
+      <a href="https://github.com/x402-cfo/x402-cfo" class="btn btn-ghost">View on GitHub</a>
     </div>
   </div>
 </section>
@@ -417,10 +417,10 @@ agent.<span class="fn">audit</span>();   <span class="cm">// Full ledger — eve
 <!-- FOOTER -->
 <div class="w">
   <footer>
-    <div class="foot-left">© 2026 Tollbooth. MIT Licensed.</div>
+    <div class="foot-left">© 2026 x402-cfo. MIT Licensed.</div>
     <div class="foot-links">
-      <a href="https://github.com/tollbooth/tollbooth">GitHub</a>
-      <a href="https://www.npmjs.com/package/tollbooth">npm</a>
+      <a href="https://github.com/x402-cfo/x402-cfo">GitHub</a>
+      <a href="https://www.npmjs.com/package/x402-cfo">npm</a>
       <a href="https://www.x402.org">x402 Protocol</a>
     </div>
   </footer>

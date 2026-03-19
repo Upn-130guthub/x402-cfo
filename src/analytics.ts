@@ -1,5 +1,5 @@
 /**
- * Real-time spend analytics for Tollbooth agent.
+ * Real-time spend analytics for x402-cfo agent.
  *
  * Computes burn rate, projected spend, and top endpoints from
  * the ledger data. Designed to be queried frequently by agent

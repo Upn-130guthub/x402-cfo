@@ -1,5 +1,5 @@
 /**
- * Append-only spend ledger for Tollbooth agent.
+ * Append-only spend ledger for x402-cfo agent.
  *
  * Records every payment decision — approved, denied, or failed —
  * with full context. This is the audit trail.
