@@ -1,7 +1,7 @@
 {
   "name": "x402-cfo",
-  "version": "0.1.1",
-  "description": "Agent financial controller for x402 payments. Budget enforcement, cost policies, spend ledger, analytics, events, and persistent storage for AI agents.",
+  "version": "0.2.1",
+  "description": "The financial brain for AI agents making x402 payments. Budget enforcement, cost policies, spend analytics, anomaly detection, and audit trail. Works with OpenClaw, LangChain, CrewAI, and MCP.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

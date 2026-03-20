@@ -277,8 +277,8 @@
   <div class="w">
     <div class="hero-badge">Agent Financial Controller</div>
     <h1>Your AI agent<br/>needs a <span>CFO</span>.</h1>
-    <p class="hero-sub">Budget enforcement, cost policies, and a complete audit trail for AI agents making autonomous x402 payments. Drop-in fetch replacement.</p>
-    <p class="hero-tagline">x402-fetch is the wallet. x402-cfo is the CFO.</p>
+    <p class="hero-sub">Budget enforcement, cost policies, spend analytics, and anomaly detection for AI agents making autonomous x402 payments. Works with OpenClaw, LangChain, CrewAI, and MCP.</p>
+    <p class="hero-tagline">The x402 ecosystem handles payments. x402-cfo watches the money.</p>
     <div class="hero-actions">
       <a href="https://npmjs.com/package/x402-cfo" class="btn btn-primary">npm install x402-cfo</a>
       <a href="https://github.com/Upn-130guthub/x402-cfo" class="btn btn-ghost">View on GitHub</a>
@@ -363,27 +363,21 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 <section class="section" id="compare">
   <div class="w" style="text-align:center">
     <div class="section-label">Why x402-cfo</div>
-    <h2>x402-fetch is the wallet.<br/>x402-cfo is the CFO.</h2>
-    <p class="section-sub" style="margin-left:auto;margin-right:auto">Client libraries handle payment plumbing. x402-cfo handles financial control.</p>
+    <h2>The ecosystem pays.<br/>Nobody watches the money.</h2>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">Coinbase AW, the Bazaar, and ClawRouter handle payments. x402-cfo is the missing financial layer.</p>
     <table class="compare-table">
       <thead>
-        <tr><th></th><th>x402-fetch</th><th>x402-cfo</th></tr>
+        <tr><th></th><th>Coinbase AW</th><th>Bazaar</th><th>ClawRouter</th><th>x402-cfo</th></tr>
       </thead>
       <tbody>
-        <tr><td>Auto-pay on 402</td><td class="check">✓</td><td class="check">✓</td></tr>
-        <tr><td>Per-request budget limit</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Rolling hourly / daily caps</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Session lifetime budget</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>URL allowlist / blocklist</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Currency & network restrictions</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Full audit ledger</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Burn rate & projected spend</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Typed event system</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Persistent storage</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Cost estimation</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Velocity spike detection</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>LangChain / CrewAI / MCP tools</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>CSV / JSON export</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Budget enforcement (multi-window)</td><td class="cross">Session only</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Cost policies (allowlist, blocklist)</td><td class="cross">Basic</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Spend analytics &amp; projections</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Cost estimation from history</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Velocity spike detection</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Event-driven alerts</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Full audit ledger with export</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>LangChain / CrewAI / MCP / OpenClaw</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
       </tbody>
     </table>
   </div>

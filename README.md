@@ -5,9 +5,11 @@
 [![zero deps](https://img.shields.io/badge/dependencies-0-10b981?style=flat-square)](package.json)
 [![tests](https://img.shields.io/badge/tests-54%2F54-10b981?style=flat-square)](#tests)
 
-**Agent financial controller for x402 payments.**
+**The financial brain for AI agents making x402 payments.**
 
-Budget enforcement, cost policies, spend ledger, analytics, events, and persistent storage for AI agents making autonomous on-chain payments via the [x402 protocol](https://www.x402.org/).
+Budget enforcement, cost policies, spend analytics, anomaly detection, and a complete audit trail for autonomous agents — whether they're calling paid APIs via the [Bazaar](https://x402.org/ecosystem), paying other agents through [A2A](https://github.com/google/A2A), or routing through [ClawRouter](https://github.com/BlockRunAI/ClawRouter). Works with [OpenClaw](https://openclawd.ai), [LangChain](https://langchain.com), [CrewAI](https://crewai.com), and [MCP](https://modelcontextprotocol.io).
+
+Part of the [x402 protocol](https://www.x402.org/) ecosystem.
 
 ## Quick start
 
@@ -49,22 +51,22 @@ agent.audit();    // Full ledger — every decision with reason
 
 ## Why x402-cfo?
 
-`x402-fetch` handles the 402→pay→retry flow. But it has zero opinions about **how much** to spend, **where** to spend, or **tracking** what was spent.
+The x402 ecosystem gives agents wallets, facilitators, and API marketplaces — but **nothing watches the money.** Coinbase Agentic Wallets have basic session caps. The Bazaar lets agents find and pay for APIs. ClawRouter picks the cheapest LLM. But none of them track burn rate, detect spending anomalies, or enforce declarative cost policies.
 
-**x402-fetch is the wallet. x402-cfo is the CFO.**
+**x402-cfo is the missing financial layer.**
 
-| | x402-fetch | x402-cfo |
-|---|---|---|
-| Auto-pay on 402 | ✅ | ✅ |
-| Budget limits (per-request, hourly, daily, session) | ❌ | ✅ |
-| Cost policies (allowlist, blocklist, currency, network) | ❌ | ✅ |
-| Spend tracking & audit ledger | ❌ | ✅ |
-| Analytics (burn rate, projected daily, top endpoints) | ❌ | ✅ |
-| Event system (payment, budget, velocity alerts) | ❌ | ✅ |
-| Persistent storage (survives restarts) | ❌ | ✅ |
-| Cost estimation from historical data | ❌ | ✅ |
-| Spending velocity spike detection | ❌ | ✅ |
-| JSON + CSV export | ❌ | ✅ |
+| Capability | Coinbase AW | Bazaar | ClawRouter | x402-cfo |
+|---|---|---|---|---|
+| Budget enforcement (multi-window) | Session only | ❌ | ❌ | ✅ |
+| Cost policies (allowlist, blocklist, currency, network) | Basic | ❌ | ❌ | ✅ |
+| Spend analytics (burn rate, projections, top endpoints) | ❌ | ❌ | ❌ | ✅ |
+| Cost estimation from history | ❌ | ❌ | ❌ | ✅ |
+| Velocity spike detection | ❌ | ❌ | ❌ | ✅ |
+| Event-driven alerts | ❌ | ❌ | ❌ | ✅ |
+| Full audit ledger with export | ❌ | ❌ | ❌ | ✅ |
+| Framework adapters (LangChain, CrewAI, MCP) | ❌ | ❌ | ❌ | ✅ |
+| OpenClaw skill | ❌ | ❌ | ❌ | ✅ |
+
 
 ## Install
 
@@ -294,6 +296,29 @@ for (const tool of mcpTools) {
 // x402_estimate_cost({ url: "https://api.paid-data.com/prices" })
 // x402_audit_ledger({})
 ```
+
+### OpenClaw
+
+Install the x402-cfo skill to give any OpenClaw agent financial awareness. Every Bazaar API call and ClawRouter request goes through the CFO automatically:
+
+```bash
+# Install the skill
+cp -r skills/x402-cfo ~/.openclaw/skills/x402-cfo
+
+# Configure via environment
+export X402_BUDGET_HOURLY=5
+export X402_BUDGET_DAILY=50
+export X402_MAX_PER_REQUEST=2.00
+```
+
+Once installed, the agent will:
+- Route all x402 payments through budget + policy checks
+- Track burn rate and project daily spend
+- Alert on velocity spikes (spending 2x+ above average)
+- Block payments that violate policy rules
+- Maintain a full audit ledger across sessions
+
+See [`skills/x402-cfo/skill.md`](skills/x402-cfo/skill.md) for the full skill specification.
 
 ### Running the demo
 
