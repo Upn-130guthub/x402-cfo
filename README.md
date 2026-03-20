@@ -197,8 +197,12 @@ Give a LangChain agent a budget and let it make autonomous paid API calls:
 ```ts
 import { AgentCFO, JsonFileStorage } from 'x402-cfo';
 import { createLangChainTools } from 'x402-cfo';
-import { ChatOpenAI } from '@langchain/openai';
-import { AgentExecutor, createOpenAIFunctionsAgent } from 'langchain/agents';
+
+// Works with ANY LangChain-compatible LLM:
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';  // Gemini
+// import { ChatAnthropic } from '@langchain/anthropic';            // Claude
+// import { ChatOpenAI } from '@langchain/openai';                  // GPT-4
+import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 
 // 1. Create the CFO — this controls ALL spending
 const cfo = new AgentCFO({
@@ -216,9 +220,9 @@ cfo.events.on('budget:warning', ({ window, percentUsed }) => {
 // 3. Create LangChain tools from the CFO
 const tools = createLangChainTools(cfo);
 
-// 4. Give them to the agent
-const llm = new ChatOpenAI({ modelName: 'gpt-4' });
-const agent = await createOpenAIFunctionsAgent({ llm, tools, prompt });
+// 4. Give them to any LLM — swap one line, everything else stays the same
+const llm = new ChatGoogleGenerativeAI({ model: 'gemini-2.0-flash' });
+const agent = await createToolCallingAgent({ llm, tools, prompt });
 const executor = new AgentExecutor({ agent, tools });
 
 // 5. The agent can now autonomously:
