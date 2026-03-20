@@ -1,6 +1,6 @@
 {
   "name": "x402-cfo",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The financial brain for AI agents making x402 payments. Budget enforcement, cost policies, spend analytics, anomaly detection, and audit trail. Works with OpenClaw, LangChain, CrewAI, and MCP.",
   "type": "module",
   "main": "dist/index.js",
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "demo": "tsx examples/demo.ts",
-    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts tests/anomaly.test.ts",
+    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts tests/anomaly.test.ts tests/pool.test.ts tests/router.test.ts tests/forecast.test.ts tests/network.test.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
