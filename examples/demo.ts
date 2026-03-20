@@ -135,7 +135,7 @@ async function main() {
   console.log('═══ Cost Estimation ═══');
   const estimate = agent.estimateCost('https://api.market-data.com/prices');
   if (estimate) {
-    console.log(`   api.market-data.com/prices → avg: $${estimate.average.toFixed(2)}, min: $${estimate.min.toFixed(2)}, max: $${estimate.max.toFixed(2)} (${estimate.samples} samples)`);
+    console.log(`   api.market-data.com/prices → mean: $${estimate.mean.toFixed(2)}, p50: $${estimate.p50.toFixed(2)}, p95: $${estimate.p95.toFixed(2)} (${estimate.samples} samples)`);
   } else {
     console.log('   No data yet');
   }

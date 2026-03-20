@@ -1,37 +1,31 @@
 ---
 name: x402-cfo
-description: Financial brain for x402 payments — budget enforcement, cost policies, spend analytics, anomaly detection, and audit trail for autonomous agents.
-version: 0.2.0
+description: Machine-native financial reasoning for irreversible autonomous x402 payments — anomaly detection, budget pools, payment routing, spend forecasting, and network intelligence.
+version: 0.4.0
 author: x402-cfo
-tags: [x402, payments, budget, finance, usdc, analytics, cfo, audit]
+tags: [x402, payments, budget, finance, usdc, analytics, cfo, audit, anomaly, forecasting, routing]
 tools: [exec, read, write]
 ---
 
 # x402-cfo Skill
 
-You are an AI agent with financial awareness. You have access to x402-cfo, which gives you budget enforcement, cost policies, spend analytics, and anomaly detection for any x402 payment you make.
+You are an AI agent with machine-native financial reasoning. You have access to x402-cfo, which gives you statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, predictive spend forecasting, and network intelligence for any x402 payment you make.
 
 ## Setup
-
-Before using this skill, ensure x402-cfo is installed in the current project:
 
 ```bash
 npm list x402-cfo 2>/dev/null || npm install x402-cfo
 ```
 
-## How to use x402-cfo
+## Core: Making paid requests
 
-When you need to make HTTP requests to x402-compatible paid APIs (any endpoint that returns HTTP 402), you MUST route the request through the AgentCFO instead of making raw fetch calls.
-
-### Initialization
-
-At the start of any session involving paid API calls, initialize the CFO:
+ALWAYS use `cfo.fetch()` instead of raw `fetch()` for any x402 endpoint:
 
 ```typescript
 import { AgentCFO, JsonFileStorage } from 'x402-cfo';
 
 const cfo = new AgentCFO({
-  wallet: walletInstance, // Your x402-compatible wallet
+  wallet: walletInstance,
   budget: {
     hourly: parseFloat(process.env.X402_BUDGET_HOURLY || '5'),
     daily: parseFloat(process.env.X402_BUDGET_DAILY || '50'),
@@ -45,62 +39,73 @@ const cfo = new AgentCFO({
   },
   storage: new JsonFileStorage('./x402-cfo-ledger.json'),
 });
-```
 
-### Making paid requests
-
-ALWAYS use `cfo.fetch()` instead of raw `fetch()` for any x402 endpoint:
-
-```typescript
 const response = await cfo.fetch('https://api.paid-service.com/v1/data');
 ```
 
-The CFO will automatically:
-1. Check if the URL passes your cost policies
-2. Check if you have remaining budget
-3. Pay the x402 challenge if approved
-4. Log the payment to the audit ledger
-5. Fire events if spending is getting hot
-
-### Before committing to expensive operations
-
-Check if you can afford it:
+## Cost estimation and budget checks
 
 ```typescript
 const estimate = cfo.estimateCost('https://api.paid-service.com/v1/data');
-// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }
+// → { mean: 0.25, p50: 0.24, p95: 0.38, stddev: 0.05, samples: 47 }
 
 const budget = cfo.spent();
 // → { sessionSpent: "4.25", hourlyRemaining: "0.75", dailyRemaining: "45.75" }
 ```
 
-### When the user asks about spending
-
-Provide a financial summary:
+## Anomaly detection
 
 ```typescript
-const summary = cfo.summary();
-// → { totalSpent, burnRatePerMinute, projectedDaily, topEndpoints, currencyBreakdown }
-
-const audit = cfo.audit();
-// → Full ledger: every payment decision with timestamp, amount, URL, status, reason
+import { AnomalyDetector } from 'x402-cfo';
+const detector = new AnomalyDetector({ zThreshold: 2.5, cooldownMs: 60_000 });
+const result = detector.observe('api.data.com', 5.00);
+// → { isAnomaly: true, zScore: 4.2, baseline: 0.25, multiplier: 20 }
 ```
 
-### Reacting to financial events
+## Multi-agent budget pools
 
-Wire alerts so you can adapt your behavior:
+```typescript
+import { BudgetPool } from 'x402-cfo';
+const pool = new BudgetPool({
+  total: 1000,
+  strategy: 'weighted',
+  agents: [
+    { id: 'researcher', weight: 3, costCenter: 'R&D' },
+    { id: 'support-bot', weight: 1, costCenter: 'Support' },
+  ],
+});
+pool.check('researcher', 2.50); // → { allowed: true, remainingAfter: 747.50 }
+```
+
+## Payment routing
+
+```typescript
+import { PaymentRouter } from 'x402-cfo';
+const router = new PaymentRouter();
+const best = await router.select(challenge.accepts);
+// → picks cheapest option by asset price + network fees + speed
+```
+
+## Spend forecasting
+
+```typescript
+import { SpendForecaster } from 'x402-cfo';
+const forecaster = new SpendForecaster({ budget: 1000 });
+forecaster.observe(0.25);
+// ... after enough observations:
+forecaster.forecast();
+// → { ratePerHour: 12.50, exhaustionEtaMs: 72000000, trend: 'accelerating', confidence: 0.95 }
+```
+
+## Reacting to financial events
 
 ```typescript
 cfo.events.on('budget:warning', ({ window, percentUsed }) => {
-  // Budget is running low — reduce spending or ask the user
+  // Budget running low — reduce spending or ask the user
 });
 
 cfo.events.on('budget:exhausted', ({ window }) => {
-  // No budget left in this window — stop making paid requests
-});
-
-cfo.events.on('velocity:spike', ({ multiplier }) => {
-  // Spending is abnormally fast — slow down or alert the user
+  // No budget left — stop making paid requests
 });
 ```
 
@@ -109,8 +114,8 @@ cfo.events.on('velocity:spike', ({ multiplier }) => {
 1. **Never bypass the CFO.** All x402 payments go through `cfo.fetch()`.
 2. **Check budget before expensive operations.** Use `cfo.spent()` and `cfo.estimateCost()`.
 3. **Report spending when asked.** Use `cfo.summary()` for high-level stats, `cfo.audit()` for the full ledger.
-4. **Respect budget exhaustion.** When a `budget:exhausted` event fires, stop making paid requests and inform the user.
-5. **React to velocity spikes.** When spending is 2x+ above average, slow down and assess.
+4. **Respect budget exhaustion.** When a `budget:exhausted` event fires, stop making paid requests.
+5. **Use the forecaster.** Know when budget runs out before it happens.
 
 ## Environment variables
 

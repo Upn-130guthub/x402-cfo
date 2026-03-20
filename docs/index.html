@@ -330,7 +330,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
   <div class="w">
     <div id="demo-container" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:20px 24px;">
       <!-- Budget cards row -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;">
         <div style="background:var(--bg);border-radius:8px;padding:12px;">
           <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Session Spent</div>
           <div id="d-session" style="font-size:22px;font-weight:800;color:#f5a623;margin-top:2px;">$0.00</div>
@@ -346,6 +346,21 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
         <div style="background:var(--bg);border-radius:8px;padding:12px;">
           <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Status</div>
           <div id="d-status" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">✓ OK</div>
+        </div>
+      </div>
+      <!-- v0.4.0 Intelligence row -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;">
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">🧠 Anomaly Detection</div>
+          <div id="d-anomaly" style="font-size:14px;font-weight:700;color:var(--txt2);margin-top:2px;">Warmup (0/5)</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">📈 Forecast</div>
+          <div id="d-forecast" style="font-size:14px;font-weight:700;color:var(--txt2);margin-top:2px;">—</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:10px 12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">🌐 Network Intel</div>
+          <div id="d-network" style="font-size:14px;font-weight:700;color:var(--txt2);margin-top:2px;">Collecting…</div>
         </div>
       </div>
       <!-- Transaction log -->
@@ -372,19 +387,36 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
   ];
   let timer=null, spent=0, hourly=5, txCount=0, startTime=0;
 
+  // Simulated EWMA anomaly detector
+  let ewma=0, ewmaVar=0, ewmaCount=0;
+  const alpha=0.3, zThreshold=2.5;
+
+  // Simulated forecaster
+  let costs=[];
+
+  // Network intel
+  let netSignals=0;
+
   window.startDemo = function(){
     if(timer) return;
     document.getElementById('d-start').textContent='⏸ Running...';
     document.getElementById('d-start').style.opacity='0.6';
     document.getElementById('d-log').innerHTML='';
     spent=0; hourly=5; txCount=0; startTime=Date.now();
+    ewma=0; ewmaVar=0; ewmaCount=0; costs=[]; netSignals=0;
+    document.getElementById('d-anomaly').textContent='Warmup (0/5)';
+    document.getElementById('d-anomaly').style.color='var(--txt2)';
+    document.getElementById('d-forecast').textContent='—';
+    document.getElementById('d-forecast').style.color='var(--txt2)';
+    document.getElementById('d-network').textContent='Collecting…';
+    document.getElementById('d-network').style.color='var(--txt2)';
     tick();
     timer=setInterval(tick, 1400 + Math.random()*800);
   };
 
   window.resetDemo = function(){
     clearInterval(timer); timer=null;
-    spent=0; hourly=5; txCount=0;
+    spent=0; hourly=5; txCount=0; ewma=0; ewmaVar=0; ewmaCount=0; costs=[]; netSignals=0;
     document.getElementById('d-session').textContent='$0.00';
     document.getElementById('d-session').style.color='#f5a623';
     document.getElementById('d-hourly').textContent='$5.00';
@@ -392,6 +424,12 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     document.getElementById('d-burn').textContent='$0.00';
     document.getElementById('d-status').textContent='✓ OK';
     document.getElementById('d-status').style.color='#10b981';
+    document.getElementById('d-anomaly').textContent='Warmup (0/5)';
+    document.getElementById('d-anomaly').style.color='var(--txt2)';
+    document.getElementById('d-forecast').textContent='—';
+    document.getElementById('d-forecast').style.color='var(--txt2)';
+    document.getElementById('d-network').textContent='Collecting…';
+    document.getElementById('d-network').style.color='var(--txt2)';
     document.getElementById('d-log').innerHTML='<div style="color:var(--txt3)">Waiting for agent activity...</div>';
     document.getElementById('d-start').textContent='▶ Start Agent';
     document.getElementById('d-start').style.opacity='1';
@@ -399,9 +437,13 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 
   function tick(){
     const ep = endpoints[Math.floor(Math.random()*endpoints.length)];
-    const jitter = ep.cost * (0.8 + Math.random()*0.4);
+    let jitter = ep.cost * (0.8 + Math.random()*0.4);
+    // Inject anomaly spike at txn 7
+    const isSpike = txCount === 6;
+    if(isSpike) jitter = ep.cost * 4.5;
     const cost = Math.round(jitter*100)/100;
     txCount++;
+    netSignals++;
 
     // Budget check
     if(spent + cost > hourly){
@@ -414,33 +456,79 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
       return;
     }
 
+    // EWMA anomaly detection
+    ewmaCount++;
+    let anomalyDetected = false;
+    let zScore = 0;
+    if(ewmaCount <= 5){
+      // Warmup phase
+      ewma = ewma===0 ? cost : ewma*(1-alpha) + cost*alpha;
+      ewmaVar = ewmaVar*(1-alpha) + alpha*Math.pow(cost-ewma,2);
+      document.getElementById('d-anomaly').textContent='Warmup ('+ewmaCount+'/5)';
+      document.getElementById('d-anomaly').style.color='var(--txt2)';
+    } else {
+      const stddev = Math.sqrt(ewmaVar);
+      zScore = stddev > 0 ? Math.abs(cost - ewma) / stddev : 0;
+      if(zScore > zThreshold){
+        anomalyDetected = true;
+        document.getElementById('d-anomaly').textContent='⚠ ANOMALY z='+zScore.toFixed(1);
+        document.getElementById('d-anomaly').style.color='#ef4444';
+      } else {
+        document.getElementById('d-anomaly').textContent='Normal z='+zScore.toFixed(1);
+        document.getElementById('d-anomaly').style.color='#10b981';
+      }
+      ewma = ewma*(1-alpha) + cost*alpha;
+      ewmaVar = ewmaVar*(1-alpha) + alpha*Math.pow(cost-ewma,2);
+    }
+
     spent += cost;
     hourly -= cost;
+    costs.push({t:Date.now(), s:spent});
     const elapsed = (Date.now()-startTime)/60000;
-    const burn = elapsed>0 ? (spent/elapsed).toFixed(2) : '0.00';
-
+    const burnPerMin = elapsed>0 ? spent/elapsed : 0;
     document.getElementById('d-session').textContent='$'+spent.toFixed(2);
     document.getElementById('d-hourly').textContent='$'+Math.max(0,hourly).toFixed(2);
-    document.getElementById('d-burn').textContent='$'+burn;
+    document.getElementById('d-burn').textContent='$'+burnPerMin.toFixed(2);
+
+    // Forecast
+    if(costs.length >= 3 && burnPerMin > 0){
+      const etaMin = hourly / burnPerMin;
+      const trend = costs.length > 5 ? (burnPerMin > 2 ? '↑ accelerating' : '→ steady') : '…';
+      if(etaMin < 2){
+        document.getElementById('d-forecast').textContent='⚠ '+etaMin.toFixed(1)+'m left '+trend;
+        document.getElementById('d-forecast').style.color='#ef4444';
+      } else {
+        document.getElementById('d-forecast').textContent=etaMin.toFixed(1)+'m left '+trend;
+        document.getElementById('d-forecast').style.color='#22d3ee';
+      }
+    }
+
+    // Network intelligence
+    if(netSignals >= 3){
+      document.getElementById('d-network').textContent=netSignals+' signals · p50=$'+(spent/txCount).toFixed(2);
+      document.getElementById('d-network').style.color='#22d3ee';
+    }
 
     // Warning at 80%
     if(hourly <= 1.0){
       document.getElementById('d-hourly').style.color='#ef4444';
-      document.getElementById('d-status').textContent='⚠️ LOW';
-      document.getElementById('d-status').style.color='#f5a623';
+      if(!anomalyDetected){
+        document.getElementById('d-status').textContent='⚠️ LOW';
+        document.getElementById('d-status').style.color='#f5a623';
+      }
     }
 
-    // Velocity spike simulation (every ~8 txns)
-    if(txCount % 8 === 0){
-      addLog('spike','SPIKE',ep.path, cost, 'spending 2.1x above average');
-      document.getElementById('d-status').textContent='🔥 SPIKE';
-      document.getElementById('d-status').style.color='#f97316';
+    // Log entry
+    if(anomalyDetected){
+      addLog('anomaly','ANOMALY',ep.path, cost, 'z-score '+zScore.toFixed(1)+' > '+zThreshold);
+      document.getElementById('d-status').textContent='🧠 ANOMALY';
+      document.getElementById('d-status').style.color='#ef4444';
       setTimeout(()=>{
         if(timer){
           document.getElementById('d-status').textContent= hourly<=1?'⚠️ LOW':'✓ OK';
           document.getElementById('d-status').style.color= hourly<=1?'#f5a623':'#10b981';
         }
-      },2000);
+      },2500);
     } else {
       addLog('paid','PAID',ep.path, cost, '');
     }
@@ -448,7 +536,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 
   function addLog(type, label, path, cost, reason){
     const log = document.getElementById('d-log');
-    const colors = {paid:'#10b981', denied:'#ef4444', spike:'#f97316'};
+    const colors = {paid:'#10b981', denied:'#ef4444', anomaly:'#ef4444'};
     const now = new Date().toLocaleTimeString();
     const reasonStr = reason ? ' <span style="color:var(--txt3)">'+reason+'</span>' : '';
     const el = document.createElement('div');
