@@ -3,11 +3,11 @@
 [![npm](https://img.shields.io/npm/v/x402-cfo?style=flat-square&color=f5a623)](https://npmjs.com/package/x402-cfo)
 [![license](https://img.shields.io/npm/l/x402-cfo?style=flat-square)](LICENSE)
 [![zero deps](https://img.shields.io/badge/dependencies-0-10b981?style=flat-square)](package.json)
-[![tests](https://img.shields.io/badge/tests-54%2F54-10b981?style=flat-square)](#tests)
+[![tests](https://img.shields.io/badge/tests-107%2F107-10b981?style=flat-square)](#tests)
 
-**The financial brain for AI agents making x402 payments.**
+**Machine-native financial reasoning for irreversible autonomous payments.**
 
-Budget enforcement, cost policies, spend analytics, anomaly detection, and a complete audit trail for autonomous agents — whether they're calling paid APIs via the [Bazaar](https://x402.org/ecosystem), paying other agents through [A2A](https://github.com/google/A2A), or routing through [ClawRouter](https://github.com/BlockRunAI/ClawRouter). Works with [OpenClaw](https://openclawd.ai), [LangChain](https://langchain.com), [CrewAI](https://crewai.com), and [MCP](https://modelcontextprotocol.io).
+The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, predictive spend forecasting, and network intelligence. Works with [OpenClaw](https://openclawd.ai), [LangChain](https://langchain.com), [CrewAI](https://crewai.com), and [MCP](https://modelcontextprotocol.io).
 
 Part of the [x402 protocol](https://www.x402.org/) ecosystem.
 
@@ -41,7 +41,7 @@ const res = await agent.fetch('https://api.chaindata.xyz/v1/prices');
 
 // Before calling an endpoint, check what it usually costs
 const estimate = agent.estimateCost('https://api.chaindata.xyz/v1/prices');
-// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }
+// → { mean: 0.25, p50: 0.24, p95: 0.38, stddev: 0.05, samples: 47 }
 
 // Check budget status
 agent.spent();    // { sessionSpent: "4.25", hourlyRemaining: "0.75", ... }
@@ -125,15 +125,70 @@ storage: new JsonFileStorage('./agent-ledger.json')
 Implement the `StorageAdapter` interface for SQLite, Redis, etc.
 
 ### 🔮 Cost estimation
-After an agent makes a few calls, it knows what endpoints typically cost:
+Percentile-based cost estimation using circular buffer:
 
 ```ts
 agent.estimateCost('https://api.chaindata.xyz/v1/prices');
-// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }
+// → { mean: 0.25, p50: 0.24, p75: 0.30, p95: 0.38, p99: 0.42, stddev: 0.05, samples: 47 }
 ```
 
-### 🔥 Velocity detection
-Automatically detects when recent spending is 2x+ above the historical average and fires a `velocity:spike` event.
+### 🧠 Statistical anomaly detection
+EWMA + Welford's online algorithm for numerically stable z-score anomaly detection. Per-host isolation, cooldown suppression, zero-variance edge case handling:
+
+```ts
+import { AnomalyDetector } from 'x402-cfo';
+const detector = new AnomalyDetector({ zThreshold: 2.5, cooldownMs: 60_000 });
+const result = detector.observe('api.data.com', 5.00);
+// → { isAnomaly: true, zScore: 4.2, baseline: 0.25, multiplier: 20, suppressed: false }
+```
+
+### 👥 Multi-agent budget pools
+Share a budget across a fleet of agents with game-theoretic rebalancing:
+
+```ts
+import { BudgetPool } from 'x402-cfo';
+const pool = new BudgetPool({
+  total: 1000,
+  strategy: 'weighted',
+  agents: [
+    { id: 'researcher', weight: 3, costCenter: 'R&D' },
+    { id: 'support-bot', weight: 1, costCenter: 'Support' },
+  ],
+});
+pool.check('researcher', 2.50); // → { allowed: true, remainingAfter: 747.50 }
+pool.analytics().byCostCenter;   // → { 'R&D': { spent: 150, allocated: 750 }, ... }
+```
+
+### 🛤️ Cost-optimal payment routing
+When an x402 challenge offers multiple payment options, pick the cheapest:
+
+```ts
+import { PaymentRouter } from 'x402-cfo';
+const router = new PaymentRouter();
+const best = await router.select(challenge.accepts);
+// → picks Base L2 ($0.001 fee) over Ethereum L1 ($0.50 fee)
+```
+
+### 📈 Predictive spend forecasting
+Online linear regression forecasts budget exhaustion:
+
+```ts
+import { SpendForecaster } from 'x402-cfo';
+const forecaster = new SpendForecaster({ budget: 1000 });
+// ... agent spends ...
+forecaster.forecast();
+// → { ratePerHour: 12.50, exhaustionEtaMs: 72000000, trend: 'accelerating', confidence: 0.95 }
+```
+
+### 🌐 Network intelligence
+Opt-in anonymized pricing signals create network effects — more users, smarter agents:
+
+```ts
+import { NetworkIntelligence } from 'x402-cfo';
+const net = new NetworkIntelligence({ enabled: true });
+net.query('api.data.com', 5.00);
+// → { isNetworkAnomaly: true, pricing: { p50: 0.25, p95: 0.40 } }
+```
 
 ## API
 
@@ -383,7 +438,7 @@ sync: { apiKey: 'your-api-key' }
 npm test
 ```
 
-54 tests across 7 suites: budget, policy, controller, events, storage, advanced, and integrations.
+107 tests across 18 suites: budget, policy, controller, events, storage, advanced, integrations, anomaly, pool, router, forecast, and network.
 
 ## License
 

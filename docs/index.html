@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>x402-cfo — The Financial Brain for AI Agents Making x402 Payments</title>
-  <meta name="description" content="Budget enforcement, cost policies, spend analytics, and anomaly detection for AI agents making autonomous x402 payments. Works with OpenClaw, LangChain, CrewAI, and MCP." />
+  <title>x402-cfo — Machine-Native Financial Reasoning for Irreversible Autonomous Payments</title>
+  <meta name="description" content="The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, and network intelligence. 107 tests, zero dependencies." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -276,10 +276,10 @@
 <!-- HERO -->
 <section class="hero">
   <div class="w">
-    <div class="hero-badge">Financial Brain for AI Agents</div>
+    <div class="hero-badge">Machine-Native Financial Reasoning</div>
     <h1>Your AI agent<br/>needs a <span>CFO</span>.</h1>
-    <p class="hero-sub">Budget enforcement, cost policies, spend analytics, and anomaly detection for AI agents making autonomous x402 payments. Works with OpenClaw, LangChain, CrewAI, and MCP.</p>
-    <p class="hero-tagline">The x402 ecosystem handles payments. x402-cfo watches the money.</p>
+    <p class="hero-sub">The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal routing, predictive forecasting, and network intelligence.</p>
+    <p class="hero-tagline">107 tests · Zero dependencies · First financial nervous system for machines</p>
     <div class="hero-actions">
       <a href="https://npmjs.com/package/x402-cfo" class="btn btn-primary">npm install x402-cfo</a>
       <a href="https://github.com/Upn-130guthub/x402-cfo" class="btn btn-ghost">View on GitHub</a>
@@ -315,7 +315,7 @@ agent.events.<span class="fn">on</span>(<span class="str">'velocity:spike'</span
 <span class="kw">const</span> res = <span class="kw">await</span> agent.<span class="fn">fetch</span>(<span class="str">'https://api.chaindata.xyz/v1/prices'</span>);
 
 agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaindata.xyz/v1/prices'</span>);
-<span class="cm">// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }</span></pre>
+<span class="cm">// → { mean: 0.25, p50: 0.24, p95: 0.38, stddev: 0.05, samples: 47 }</span></pre>
     </div>
   </div>
 </section>
@@ -518,10 +518,11 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
       <tbody>
         <tr><td>Budget enforcement (multi-window)</td><td class="cross">Session only</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Cost policies (allowlist, blocklist)</td><td class="cross">Basic</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Spend analytics &amp; projections</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Cost estimation from history</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Velocity spike detection</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Event-driven alerts</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Statistical anomaly detection (EWMA + z-score)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Multi-agent budget pools (game theory)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Cost-optimal payment routing</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Predictive spend forecasting (regression)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Network intelligence (pricing signals)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Full audit ledger with export</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>LangChain / CrewAI / MCP / OpenClaw</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Express middleware + live dashboard</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
@@ -534,8 +535,8 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 <section class="section" id="features">
   <div class="w">
     <div class="section-label">Features</div>
-    <h2>Financial control for autonomous agents.</h2>
-    <p class="section-sub">Zero runtime dependencies. Everything your agent needs to spend responsibly.</p>
+    <h2>Machine-native financial reasoning.</h2>
+    <p class="section-sub">Zero runtime dependencies. 107 tests. The first financial nervous system built for machines, not adapted from human finance.</p>
     <div class="feat-grid">
       <div class="feat-card">
         <div class="feat-icon">🏦</div>
@@ -563,19 +564,34 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
         <div class="feat-desc">Ledger survives restarts. Ships with JsonFileStorage, pluggable StorageAdapter for SQLite or Redis.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">🔮</div>
-        <div class="feat-title">Cost Estimation</div>
-        <div class="feat-desc">Learns what endpoints cost from history. Query average, min, max before making a call.</div>
+        <div class="feat-icon">🧠</div>
+        <div class="feat-title">Anomaly Detection</div>
+        <div class="feat-desc">EWMA + Welford’s online algorithm. Per-host z-score anomaly detection with cooldown suppression and warmup phase.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">🔥</div>
-        <div class="feat-title">Velocity Detection</div>
-        <div class="feat-desc">Fires an event when spending 2x+ above the historical average. Catch runaway agents before they burn budget.</div>
+        <div class="feat-icon">👥</div>
+        <div class="feat-title">Multi-Agent Budget Pools</div>
+        <div class="feat-desc">Share budgets across agent fleets. Equal/weighted/priority allocation with game-theoretic rebalancing from idle agents.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🛤️</div>
+        <div class="feat-title">Payment Routing</div>
+        <div class="feat-desc">When x402 offers multiple payment options, automatically pick the cheapest by asset price, network fees, and settlement speed.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">📈</div>
+        <div class="feat-title">Spend Forecasting</div>
+        <div class="feat-desc">Online linear regression predicts budget exhaustion ETA with confidence interval. Detects accelerating, steady, or decelerating spend.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">🌐</div>
+        <div class="feat-title">Network Intelligence</div>
+        <div class="feat-desc">Opt-in anonymized pricing signals create network effects. More users = smarter agents. Detect anomalies across the entire network.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">📊</div>
         <div class="feat-title">Spend Analytics</div>
-        <div class="feat-desc">Burn rate, projected daily spend, top endpoints by cost, and currency breakdown.</div>
+        <div class="feat-desc">Burn rate, projected daily spend, percentile-based cost estimation, top endpoints by cost, and currency breakdown.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">🖥️</div>
