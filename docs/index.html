@@ -325,7 +325,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
   <div class="w" style="text-align:center">
     <div class="section-label">Live Demo</div>
     <h2>See why your agent needs a CFO.</h2>
-    <p class="section-sub" style="margin-left:auto;margin-right:auto">Press play. Watch an AI agent pay for APIs, hit a price spike, and get stopped before wasting money.</p>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">Press play. Watch an AI agent pay for APIs, catch a 7× price spike, and block the payment before irreversible money leaves the wallet.</p>
   </div>
   <div class="w">
     <div id="demo-container" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:20px 24px;">
@@ -375,11 +375,12 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     { path:'/v1/gas-estimate', cost:0.12, narration:'Gas price estimate — cheap call at $0.12. x402-cfo is building a pricing baseline for this host.', type:'paid' },
     { path:'/v1/defi-yields',  cost:0.35, narration:'DeFi yield data. After 4 calls, the anomaly detector knows the normal price range ($0.12–$0.40).', type:'paid' },
     { path:'/v1/prices',       cost:0.22, narration:'Another price check. Normal range. Forecast: budget will last about 3 more minutes at this rate.', type:'paid' },
-    { path:'/v1/whale-alerts', cost:2.80, narration:'🚨 ANOMALY DETECTED! This endpoint is charging $2.80 — 7x above the baseline. x402-cfo flags it but the budget still allows it.', type:'anomaly' },
-    { path:'/v1/prices',       cost:0.20, narration:'Back to normal pricing. The anomaly was a one-off spike. Forecast updates: budget running low.', type:'paid' },
-    { path:'/v1/sentiment',    cost:0.38, narration:'⚠️ Budget below 20%. Forecast: exhaustion in under 1 minute. Agent should wrap up.', type:'paid' },
-    { path:'/v1/token-metrics', cost:0.30, narration:'Token metrics — still approved, but barely any budget left. Last chance before the gate closes.', type:'paid' },
-    { path:'/v1/whale-alerts', cost:0.55, narration:'🛑 DENIED. This $0.55 call would exceed the $5 budget. x402-cfo blocked it. No money left the wallet.', type:'denied' },
+    { path:'/v1/whale-alerts', cost:2.80, narration:'🛑 BLOCKED. This endpoint wants $2.80 — that\u2019s 7\u00d7 the normal price. x402 payments are irreversible, so x402-cfo refused to pay. $2.80 saved.', type:'anomaly-blocked' },
+    { path:'/v1/prices',       cost:0.20, narration:'Back to normal. The agent retried a different endpoint and got fair pricing. This is why machine reasoning matters — no human was in the loop.', type:'paid' },
+    { path:'/v1/sentiment',    cost:0.38, narration:'Sentiment analysis at $0.38 — well within the normal range. Anomaly detector confirms: ✓ Normal.', type:'paid' },
+    { path:'/v1/token-metrics', cost:0.30, narration:'Token metrics approved. Budget is running low now. Forecaster predicts ~1 minute of budget left at this rate.', type:'paid' },
+    { path:'/v1/defi-yields',  cost:0.35, narration:'DeFi yields at $0.35. Budget almost empty. But every payment that DID go through was at a fair price — that\u2019s the point.', type:'paid' },
+    { path:'/v1/nft-floor',    cost:0.55, narration:'Budget exhausted. This is just accounting — the real value was blocking that $2.80 overcharge 4 transactions ago.', type:'denied' },
   ];
 
   let timer=null, step=0, spent=0, budget=5;
@@ -426,10 +427,10 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     // Update narration
     const narEl = document.getElementById('d-narration');
     narEl.textContent = s.narration;
-    if(s.type === 'anomaly'){
-      narEl.style.borderColor='rgba(239,68,68,0.3)';
-      narEl.style.background='rgba(239,68,68,0.08)';
-      narEl.style.color='#ef4444';
+    if(s.type === 'anomaly-blocked'){
+      narEl.style.borderColor='rgba(249,115,22,0.4)';
+      narEl.style.background='rgba(249,115,22,0.10)';
+      narEl.style.color='#f97316';
     } else if(s.type === 'denied'){
       narEl.style.borderColor='rgba(239,68,68,0.3)';
       narEl.style.background='rgba(239,68,68,0.08)';
@@ -443,14 +444,13 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     // Process payment
     if(s.type === 'denied'){
       addLog('denied', 'DENIED', s.path, s.cost, 'would exceed budget');
-      // Don't deduct
+    } else if(s.type === 'anomaly-blocked'){
+      addLog('blocked', 'BLOCKED', s.path, s.cost, 'price anomaly — 7× above baseline');
+      // Don't deduct — this is the intelligent act
     } else {
       spent += s.cost;
       budget -= s.cost;
-      addLog(s.type === 'anomaly' ? 'anomaly' : 'paid',
-             s.type === 'anomaly' ? 'ANOMALY' : 'PAID',
-             s.path, s.cost,
-             s.type === 'anomaly' ? 'price 7× above baseline!' : '');
+      addLog('paid', 'PAID', s.path, s.cost, '');
     }
 
     updateStats();
@@ -460,9 +460,9 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     if(step < 4){
       aEl.textContent = 'Learning…';
       aEl.style.color = 'var(--txt2)';
-    } else if(s.type === 'anomaly'){
-      aEl.textContent = '🚨 SPIKE!';
-      aEl.style.color = '#ef4444';
+    } else if(s.type === 'anomaly-blocked'){
+      aEl.textContent = '🛑 BLOCKED';
+      aEl.style.color = '#f97316';
     } else {
       aEl.textContent = '✓ Normal';
       aEl.style.color = '#10b981';
@@ -476,6 +476,9 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     } else if(s.type === 'denied'){
       fEl.textContent = '🛑 Empty';
       fEl.style.color = '#ef4444';
+    } else if(s.type === 'anomaly-blocked'){
+      fEl.textContent = '$2.80 saved';
+      fEl.style.color = '#10b981';
     } else if(budget < 1){
       fEl.textContent = '⚠ <1 min';
       fEl.style.color = '#ef4444';
@@ -486,7 +489,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     }
 
     step++;
-    timer = setTimeout(runStep, 2200);
+    timer = setTimeout(runStep, s.type === 'anomaly-blocked' ? 3500 : 2200);
   }
 
   function updateStats(){
@@ -498,7 +501,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 
   function addLog(type, label, path, cost, reason){
     const log = document.getElementById('d-log');
-    const colors = {paid:'#10b981', denied:'#ef4444', anomaly:'#f97316'};
+    const colors = {paid:'#10b981', denied:'#ef4444', blocked:'#f97316'};
     const now = new Date().toLocaleTimeString();
     const reasonStr = reason ? '  <span style="color:var(--txt3);font-style:italic">'+reason+'</span>' : '';
     const el = document.createElement('div');
