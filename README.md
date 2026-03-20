@@ -202,8 +202,8 @@ import { createLangChainTools } from 'x402-cfo';
 
 // Works with ANY LangChain-compatible LLM:
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';  // Gemini
-// import { ChatAnthropic } from '@langchain/anthropic';            // Claude 4 Sonnet
-// import { ChatOpenAI } from '@langchain/openai';                  // GPT-4.1
+// import { ChatAnthropic } from '@langchain/anthropic';            // Claude Sonnet 4.6
+// import { ChatOpenAI } from '@langchain/openai';                  // GPT-5.4
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 
 // 1. Create the CFO — this controls ALL spending
@@ -223,7 +223,7 @@ cfo.events.on('budget:warning', ({ window, percentUsed }) => {
 const tools = createLangChainTools(cfo);
 
 // 4. Give them to any LLM — swap one line, everything else stays the same
-const llm = new ChatGoogleGenerativeAI({ model: 'gemini-2.0-flash' });
+const llm = new ChatGoogleGenerativeAI({ model: 'gemini-3.1-pro' });
 const agent = await createToolCallingAgent({ llm, tools, prompt });
 const executor = new AgentExecutor({ agent, tools });
 
