@@ -20,6 +20,7 @@ import { Policy, type PolicyRules } from './policy.js';
 import { Analytics, type SpendSummary } from './analytics.js';
 import { DashboardSync, type SyncConfig } from './sync.js';
 import { AgentEvents, type AgentEventMap } from './events.js';
+import { AnomalyDetector, type AnomalyDetectorConfig, type CostEstimate, type AnomalyResult } from './anomaly.js';
 import type { StorageAdapter } from './storage.js';
 
 /** x402 payment requirement from a 402 response. */
@@ -66,6 +67,8 @@ export interface AgentCFOConfig {
   storage?: StorageAdapter;
   /** Budget warning threshold (0-1). Default: 0.8 (80%). */
   warningThreshold?: number;
+  /** Anomaly detection tuning. */
+  anomaly?: AnomalyDetectorConfig;
   /** Custom fetch implementation (defaults to globalThis.fetch). */
   fetchImpl?: typeof fetch;
 }
@@ -82,8 +85,8 @@ export class AgentCFO {
   private fetchImpl: typeof fetch;
   /** Typed event emitter — subscribe to payment, budget, and velocity events. */
   public events: AgentEvents;
-  /** Historical cost per endpoint (for cost estimation). */
-  private costHistory: Map<string, number[]> = new Map();
+  /** Statistical anomaly detector (EWMA + Welford's + z-score). */
+  private anomalyDetector: AnomalyDetector;
 
   constructor(config: AgentCFOConfig) {
     this.wallet = config.wallet;
@@ -92,6 +95,7 @@ export class AgentCFO {
     this.ledger = new Ledger();
     this.analytics = new Analytics(this.ledger);
     this.events = new AgentEvents();
+    this.anomalyDetector = new AnomalyDetector(config.anomaly);
     this.sync = config.sync
       ? new DashboardSync(config.sync, () => this.budget.status(), () => this.analytics.summary())
       : null;
@@ -107,7 +111,8 @@ export class AgentCFO {
           this.ledger.record(entry);
           if (entry.status === 'paid') {
             this.budget.record(parseFloat(entry.amount));
-            this.trackCost(entry.url, parseFloat(entry.amount));
+            const host = this.extractHost(entry.url);
+            this.anomalyDetector.observe(host, parseFloat(entry.amount), new Date(entry.timestamp).getTime());
           }
         }
       }
@@ -224,19 +229,21 @@ export class AgentCFO {
 
   /**
    * Estimate the cost of calling a URL based on historical data.
-   * Returns null if no history exists for this endpoint.
+   * Returns percentile-based statistics (p50, p75, p95, p99) using
+   * Welford's online algorithm and circular buffer sampling.
+   * Returns null if insufficient history exists.
    */
-  estimateCost(url: string): { average: number; min: number; max: number; samples: number } | null {
+  estimateCost(url: string): CostEstimate | null {
     const host = this.extractHost(url);
-    const history = this.costHistory.get(host);
-    if (!history || history.length === 0) return null;
-    const sum = history.reduce((a, b) => a + b, 0);
-    return {
-      average: sum / history.length,
-      min: Math.min(...history),
-      max: Math.max(...history),
-      samples: history.length,
-    };
+    return this.anomalyDetector.estimate(host);
+  }
+
+  /**
+   * Get the full anomaly detector for advanced usage.
+   * Exposes global estimates, per-host stats, and configuration.
+   */
+  get detector(): AnomalyDetector {
+    return this.anomalyDetector;
   }
 
   /** Stop dashboard sync and event handlers (call on agent shutdown). */
@@ -249,15 +256,6 @@ export class AgentCFO {
 
   private extractHost(url: string): string {
     try { return new URL(url).hostname; } catch { return url; }
-  }
-
-  private trackCost(url: string, amount: number): void {
-    const host = this.extractHost(url);
-    if (!this.costHistory.has(host)) this.costHistory.set(host, []);
-    const history = this.costHistory.get(host)!;
-    history.push(amount);
-    // Keep last 100 data points per host
-    if (history.length > 100) history.shift();
   }
 
   private checkBudgetWarnings(): void {
@@ -279,25 +277,20 @@ export class AgentCFO {
     }
   }
 
-  private checkVelocity(): void {
-    const summary = this.analytics.summary();
-    if (summary.totalTransactions < 5) return; // Need enough data points
+  /**
+   * Check for velocity anomalies using EWMA + z-score detection.
+   * Replaces the naive 2x-multiplier approach with proper statistical
+   * anomaly detection (Welford's online variance + z-score thresholds).
+   */
+  private checkVelocity(url: string, amount: number): void {
+    const host = this.extractHost(url);
+    const result = this.anomalyDetector.observe(host, amount);
 
-    const recent = this.ledger.all()
-      .filter(e => e.status === 'paid')
-      .slice(-10)
-      .map(e => parseFloat(e.amount));
-
-    if (recent.length < 3) return;
-
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const overallAvg = parseFloat(summary.totalSpent) / summary.totalTransactions;
-
-    if (overallAvg > 0 && recentAvg > overallAvg * 2) {
+    if (result.isAnomaly) {
       this.events.emit('velocity:spike', {
-        currentRate: recentAvg,
-        averageRate: overallAvg,
-        multiplier: recentAvg / overallAvg,
+        currentRate: amount,
+        averageRate: result.baseline,
+        multiplier: result.multiplier,
       });
     }
   }
@@ -313,10 +306,9 @@ export class AgentCFO {
     this.ledger.record(entry);
     this.sync?.push(entry);
     this.storage?.append(entry);
-    this.trackCost(url, parseFloat(amount));
     this.events.emit('payment:success', { entry });
     this.checkBudgetWarnings();
-    this.checkVelocity();
+    this.checkVelocity(url, parseFloat(amount));
   }
 
   private logDenied(url: string, amount: string, currency: string, network: string, reason: string): void {

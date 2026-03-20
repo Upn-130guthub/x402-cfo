@@ -148,7 +148,11 @@ test('advanced: estimateCost tracks historical costs', async () => {
   assert.equal(estimate.samples, 3);
   assert.equal(estimate.min, 0.10);
   assert.equal(estimate.max, 0.30);
-  assert.ok(Math.abs(estimate.average - 0.20) < 0.001);
+  assert.ok(Math.abs(estimate.mean - 0.20) < 0.01, `mean should be ~0.20, got ${estimate.mean}`);
+  // New: percentile-based estimates
+  assert.ok(estimate.p50 >= 0.10 && estimate.p50 <= 0.30, `p50 should be between min/max, got ${estimate.p50}`);
+  assert.ok(estimate.p95 >= 0.20, `p95 should be >= 0.20, got ${estimate.p95}`);
+  assert.ok(estimate.stddev > 0, 'stddev should be positive for varied costs');
 });
 
 test('advanced: emits payment:failed on wallet error', async () => {
