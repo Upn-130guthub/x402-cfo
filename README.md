@@ -66,7 +66,7 @@ The x402 ecosystem gives agents wallets, facilitators, and API marketplaces — 
 | Full audit ledger with export | ❌ | ❌ | ❌ | ✅ |
 | Framework adapters (LangChain, CrewAI, MCP) | ❌ | ❌ | ❌ | ✅ |
 | OpenClaw skill | ❌ | ❌ | ❌ | ✅ |
-
+| Express middleware + live dashboard | ❌ | ❌ | ❌ | ✅ |
 
 ## Install
 
@@ -295,6 +295,35 @@ for (const tool of mcpTools) {
 // x402_check_budget({})
 // x402_estimate_cost({ url: "https://api.paid-data.com/prices" })
 // x402_audit_ledger({})
+```
+
+### Express middleware + live dashboard
+
+Add x402-cfo to any Express app with one line. Includes a live dashboard at `/_cfo/html`:
+
+```ts
+import express from 'express';
+import { AgentCFO, createExpressMiddleware } from 'x402-cfo';
+
+const app = express();
+const cfo = new AgentCFO({
+  wallet: myWallet,
+  budget: { hourly: 5, daily: 50, session: 200 },
+  policy: { maxPerRequest: 2.00, allowedCurrencies: ['USDC'] },
+});
+
+// One line — all routes get budget enforcement + live dashboard
+app.use(createExpressMiddleware(cfo));
+
+// Your routes can access cfo via req.cfo
+app.get('/research', async (req, res) => {
+  const data = await req.cfo.fetch('https://api.chaindata.xyz/v1/prices');
+  res.json(await data.json());
+});
+
+app.listen(3000);
+// Dashboard at http://localhost:3000/_cfo/html
+// JSON API at http://localhost:3000/_cfo
 ```
 
 ### OpenClaw

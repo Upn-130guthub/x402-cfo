@@ -1,9 +1,8 @@
 /**
  * Framework integrations for x402-cfo.
  *
- * Pre-built adapters for LangChain, CrewAI, and generic tool-use
- * patterns. This is the distribution moat — if agent frameworks
- * default to x402-cfo for payment control, switching costs are real.
+ * Pre-built adapters for LangChain, CrewAI, MCP, and generic tool-use
+ * patterns. Gives any agent framework financial controls with one import.
  *
  * Usage with LangChain:
  *   import { AgentCFO } from 'x402-cfo';
