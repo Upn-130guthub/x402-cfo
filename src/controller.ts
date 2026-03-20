@@ -1,5 +1,5 @@
 /**
- * AgentCFO — the agent financial controller.
+ * AgentCFO — the financial brain for AI agents making x402 payments.
  *
  * Wraps `fetch` and intercepts x402 (402 Payment Required) responses.
  * Before paying, checks policy → budget → decides. After paying,
