@@ -263,6 +263,7 @@
   <div class="w nav-inner">
     <div class="nav-logo">x402-cfo</div>
     <div class="nav-links">
+      <a href="#demo">Live Demo</a>
       <a href="#how">How it works</a>
       <a href="#compare">Why x402-cfo</a>
       <a href="#features">Features</a>
@@ -318,6 +319,151 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     </div>
   </div>
 </section>
+
+<!-- LIVE DEMO -->
+<section class="section" id="demo">
+  <div class="w" style="text-align:center">
+    <div class="section-label">Live Demo</div>
+    <h2>Watch an agent spend in real time.</h2>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">This is what x402-cfo sees when your agent makes payments. No install needed — just watch.</p>
+  </div>
+  <div class="w">
+    <div id="demo-container" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:20px 24px;">
+      <!-- Budget cards row -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Session Spent</div>
+          <div id="d-session" style="font-size:22px;font-weight:800;color:#f5a623;margin-top:2px;">$0.00</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Hourly Left</div>
+          <div id="d-hourly" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">$5.00</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Burn Rate / min</div>
+          <div id="d-burn" style="font-size:22px;font-weight:800;color:#6366f1;margin-top:2px;">$0.00</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Status</div>
+          <div id="d-status" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">✓ OK</div>
+        </div>
+      </div>
+      <!-- Transaction log -->
+      <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Transaction Log</div>
+      <div id="d-log" style="background:var(--bg);border-radius:8px;padding:8px 12px;max-height:200px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--txt2);">
+        <div style="color:var(--txt3);">Waiting for agent activity...</div>
+      </div>
+      <!-- Controls -->
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:center;">
+        <button id="d-start" onclick="startDemo()" style="background:linear-gradient(135deg,#f5a623,#e8930c);color:#0a0e1a;border:none;border-radius:6px;padding:8px 20px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;">▶ Start Agent</button>
+        <button id="d-reset" onclick="resetDemo()" style="background:transparent;color:var(--txt3);border:1px solid var(--border);border-radius:6px;padding:8px 20px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;">Reset</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+  const endpoints = [
+    {path:'/v1/prices', cost:0.25}, {path:'/v1/sentiment', cost:0.40},
+    {path:'/v1/transactions', cost:0.15}, {path:'/v1/gas-estimate', cost:0.10},
+    {path:'/v1/whale-alerts', cost:0.60}, {path:'/v1/defi-yields', cost:0.35},
+    {path:'/v1/nft-floor', cost:0.20}, {path:'/v1/token-metrics', cost:0.30},
+  ];
+  let timer=null, spent=0, hourly=5, txCount=0, startTime=0;
+
+  window.startDemo = function(){
+    if(timer) return;
+    document.getElementById('d-start').textContent='⏸ Running...';
+    document.getElementById('d-start').style.opacity='0.6';
+    document.getElementById('d-log').innerHTML='';
+    spent=0; hourly=5; txCount=0; startTime=Date.now();
+    tick();
+    timer=setInterval(tick, 1400 + Math.random()*800);
+  };
+
+  window.resetDemo = function(){
+    clearInterval(timer); timer=null;
+    spent=0; hourly=5; txCount=0;
+    document.getElementById('d-session').textContent='$0.00';
+    document.getElementById('d-session').style.color='#f5a623';
+    document.getElementById('d-hourly').textContent='$5.00';
+    document.getElementById('d-hourly').style.color='#10b981';
+    document.getElementById('d-burn').textContent='$0.00';
+    document.getElementById('d-status').textContent='✓ OK';
+    document.getElementById('d-status').style.color='#10b981';
+    document.getElementById('d-log').innerHTML='<div style="color:var(--txt3)">Waiting for agent activity...</div>';
+    document.getElementById('d-start').textContent='▶ Start Agent';
+    document.getElementById('d-start').style.opacity='1';
+  };
+
+  function tick(){
+    const ep = endpoints[Math.floor(Math.random()*endpoints.length)];
+    const jitter = ep.cost * (0.8 + Math.random()*0.4);
+    const cost = Math.round(jitter*100)/100;
+    txCount++;
+
+    // Budget check
+    if(spent + cost > hourly){
+      addLog('denied','DENIED',ep.path, cost, 'hourly budget exceeded');
+      document.getElementById('d-status').textContent='🛑 DENIED';
+      document.getElementById('d-status').style.color='#ef4444';
+      clearInterval(timer); timer=null;
+      document.getElementById('d-start').textContent='▶ Start Agent';
+      document.getElementById('d-start').style.opacity='1';
+      return;
+    }
+
+    spent += cost;
+    hourly -= cost;
+    const elapsed = (Date.now()-startTime)/60000;
+    const burn = elapsed>0 ? (spent/elapsed).toFixed(2) : '0.00';
+
+    document.getElementById('d-session').textContent='$'+spent.toFixed(2);
+    document.getElementById('d-hourly').textContent='$'+Math.max(0,hourly).toFixed(2);
+    document.getElementById('d-burn').textContent='$'+burn;
+
+    // Warning at 80%
+    if(hourly <= 1.0){
+      document.getElementById('d-hourly').style.color='#ef4444';
+      document.getElementById('d-status').textContent='⚠️ LOW';
+      document.getElementById('d-status').style.color='#f5a623';
+    }
+
+    // Velocity spike simulation (every ~8 txns)
+    if(txCount % 8 === 0){
+      addLog('spike','SPIKE',ep.path, cost, 'spending 2.1x above average');
+      document.getElementById('d-status').textContent='🔥 SPIKE';
+      document.getElementById('d-status').style.color='#f97316';
+      setTimeout(()=>{
+        if(timer){
+          document.getElementById('d-status').textContent= hourly<=1?'⚠️ LOW':'✓ OK';
+          document.getElementById('d-status').style.color= hourly<=1?'#f5a623':'#10b981';
+        }
+      },2000);
+    } else {
+      addLog('paid','PAID',ep.path, cost, '');
+    }
+  }
+
+  function addLog(type, label, path, cost, reason){
+    const log = document.getElementById('d-log');
+    const colors = {paid:'#10b981', denied:'#ef4444', spike:'#f97316'};
+    const now = new Date().toLocaleTimeString();
+    const reasonStr = reason ? ' <span style="color:var(--txt3)">'+reason+'</span>' : '';
+    const el = document.createElement('div');
+    el.innerHTML = '<span style="color:var(--txt3)">'+now+'</span> '
+      + '<span style="color:'+colors[type]+';font-weight:700">'+label+'</span> '
+      + 'api.chaindata.xyz<span style="color:var(--txt)">'+path+'</span> '
+      + '<span style="color:#f5a623">$'+cost.toFixed(2)+'</span>'
+      + reasonStr;
+    el.style.opacity='0';el.style.transition='opacity 0.3s';
+    log.prepend(el);
+    requestAnimationFrame(()=>el.style.opacity='1');
+    while(log.children.length > 15) log.removeChild(log.lastChild);
+  }
+})();
+</script>
 
 <!-- HOW IT WORKS -->
 <section class="section" id="how">
