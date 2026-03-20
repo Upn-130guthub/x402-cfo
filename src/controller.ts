@@ -11,7 +11,7 @@
  *     budget: { hourly: 5, daily: 50 },
  *     policy: { maxPerRequest: 2.00 },
  *   });
- *   const res = await agent.fetch('https://api.example.com/data');
+ *   const res = await agent.fetch('https://api.chaindata.xyz/v1/prices');
  */
 
 import { Budget, type BudgetLimits, type BudgetStatus } from './budget.js';

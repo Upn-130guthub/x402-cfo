@@ -35,10 +35,10 @@ agent.events.on('velocity:spike', ({ multiplier }) => {
 });
 
 // Drop-in fetch replacement — handles 402 → policy → budget → pay → log
-const res = await agent.fetch('https://api.example.com/premium/data');
+const res = await agent.fetch('https://api.chaindata.xyz/v1/prices');
 
 // Before calling an endpoint, check what it usually costs
-const estimate = agent.estimateCost('https://api.example.com/premium/data');
+const estimate = agent.estimateCost('https://api.chaindata.xyz/v1/prices');
 // → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }
 
 // Check budget status
@@ -126,7 +126,7 @@ Implement the `StorageAdapter` interface for SQLite, Redis, etc.
 After an agent makes a few calls, it knows what endpoints typically cost:
 
 ```ts
-agent.estimateCost('https://api.example.com/data');
+agent.estimateCost('https://api.chaindata.xyz/v1/prices');
 // → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }
 ```
 
@@ -200,8 +200,8 @@ import { createLangChainTools } from 'x402-cfo';
 
 // Works with ANY LangChain-compatible LLM:
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';  // Gemini
-// import { ChatAnthropic } from '@langchain/anthropic';            // Claude
-// import { ChatOpenAI } from '@langchain/openai';                  // GPT-4
+// import { ChatAnthropic } from '@langchain/anthropic';            // Claude 4 Sonnet
+// import { ChatOpenAI } from '@langchain/openai';                  // GPT-4.1
 import { AgentExecutor, createToolCallingAgent } from 'langchain/agents';
 
 // 1. Create the CFO — this controls ALL spending

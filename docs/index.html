@@ -311,9 +311,9 @@ agent.events.<span class="fn">on</span>(<span class="str">'velocity:spike'</span
 });
 
 <span class="cm">// Drop-in fetch — auto-handles 402 → policy → budget → pay → log</span>
-<span class="kw">const</span> res = <span class="kw">await</span> agent.<span class="fn">fetch</span>(<span class="str">'https://api.example.com/data'</span>);
+<span class="kw">const</span> res = <span class="kw">await</span> agent.<span class="fn">fetch</span>(<span class="str">'https://api.chaindata.xyz/v1/prices'</span>);
 
-agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.example.com/data'</span>);
+agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaindata.xyz/v1/prices'</span>);
 <span class="cm">// → { average: 0.25, min: 0.20, max: 0.35, samples: 47 }</span></pre>
     </div>
   </div>
