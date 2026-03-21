@@ -1,5 +1,7 @@
+import { Policy, type PolicyRules, type PolicyDecision } from './policy.js';
+
 /**
- * Multi-Agent Budget Pool — the feature no competitor has.
+ * Multi-Agent Budget Pool — fleet-level budget management.
  *
  * Problem: When you have 10 agents sharing a $1000/day budget, you need:
  *   1. Centralized pool with per-agent allocation
@@ -32,6 +34,8 @@ export interface PoolAgentConfig {
   priority?: number;
   /** Optional label for cost-center reporting. */
   costCenter?: string;
+  /** Per-agent policy overrides (merged with pool default policy). */
+  policyOverrides?: Partial<PolicyRules>;
 }
 
 /** Allocation strategy. */
@@ -49,6 +53,8 @@ export interface BudgetPoolConfig {
   idleThresholdMs?: number;
   /** Minimum surplus ratio before budget can be reclaimed (0-1). Default: 0.5 (agent used < 50%) */
   surplusThreshold?: number;
+  /** Default policy rules applied to all agents (can be overridden per-agent). */
+  defaultPolicy?: PolicyRules;
 }
 
 /** Per-agent budget state within the pool. */
@@ -67,6 +73,8 @@ interface AgentPoolState {
   transactionCount: number;
   /** Spend by endpoint for cost-center drill-down */
   endpointSpend: Map<string, number>;
+  /** Per-agent policy overrides */
+  policyOverrides?: Partial<PolicyRules>;
 }
 
 /** Pool-level analytics for finance reporting. */
@@ -140,12 +148,14 @@ export class BudgetPool {
   private idleThresholdMs: number;
   private surplusThreshold: number;
   private rebalanceCount: number = 0;
+  private defaultPolicy: PolicyRules;
 
   constructor(config: BudgetPoolConfig) {
     this.totalBudget = config.total;
     this.strategy = config.strategy ?? 'equal';
     this.idleThresholdMs = config.idleThresholdMs ?? 300_000;
     this.surplusThreshold = config.surplusThreshold ?? 0.5;
+    this.defaultPolicy = config.defaultPolicy ?? {};
 
     if (config.agents.length === 0) {
       throw new Error('BudgetPool requires at least one agent');
@@ -178,6 +188,7 @@ export class BudgetPool {
         lastActivityAt: 0,
         transactionCount: 0,
         endpointSpend: new Map(),
+        policyOverrides: agentConfig.policyOverrides,
       });
     }
   }
@@ -242,6 +253,48 @@ export class BudgetPool {
       const current = agent.endpointSpend.get(endpoint) ?? 0;
       agent.endpointSpend.set(endpoint, Math.round((current + amount) * 100) / 100);
     }
+  }
+
+  /**
+   * Get the effective policy for an agent (default + overrides merged).
+   * Overrides take precedence: if an agent specifies maxPerRequest,
+   * it replaces the org default for that field.
+   */
+  effectivePolicy(agentId: string): PolicyRules {
+    const agent = this.agents.get(agentId);
+    if (!agent) throw new Error(`Unknown agent: ${agentId}`);
+
+    const merged: PolicyRules = { ...this.defaultPolicy };
+    const overrides = agent.policyOverrides;
+    if (!overrides) return merged;
+
+    // Scalar overrides replace
+    if (overrides.maxPerRequest !== undefined) merged.maxPerRequest = overrides.maxPerRequest;
+
+    // Array overrides: agent-specific replaces default entirely (not merge)
+    if (overrides.allowlist) merged.allowlist = overrides.allowlist;
+    if (overrides.blocklist) merged.blocklist = overrides.blocklist;
+    if (overrides.allowedCurrencies) merged.allowedCurrencies = overrides.allowedCurrencies;
+    if (overrides.allowedNetworks) merged.allowedNetworks = overrides.allowedNetworks;
+
+    return merged;
+  }
+
+  /**
+   * Check a payment against the agent's effective policy (org default + overrides).
+   */
+  checkPolicy(agentId: string, params: { url: string; amount: number; currency: string; network: string }): PolicyDecision {
+    const rules = this.effectivePolicy(agentId);
+    const policy = new Policy(rules);
+    return policy.check(params);
+  }
+
+  /**
+   * Update the default policy for all agents.
+   * Existing per-agent overrides are preserved.
+   */
+  updateDefaultPolicy(rules: PolicyRules): void {
+    this.defaultPolicy = rules;
   }
 
   /**
@@ -325,6 +378,7 @@ export class BudgetPool {
       lastActivityAt: 0,
       transactionCount: 0,
       endpointSpend: new Map(),
+      policyOverrides: config.policyOverrides,
     });
   }
 

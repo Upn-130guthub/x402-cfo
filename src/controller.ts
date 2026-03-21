@@ -1,5 +1,5 @@
 /**
- * AgentCFO — the financial brain for AI agents making x402 payments.
+ * AgentCFO — spend control for AI agents making x402 payments.
  *
  * Wraps `fetch` and intercepts x402 (402 Payment Required) responses.
  * Before paying, checks policy → budget → decides. After paying,
@@ -19,9 +19,27 @@ import { Ledger, type LedgerEntry } from './ledger.js';
 import { Policy, type PolicyRules } from './policy.js';
 import { Analytics, type SpendSummary } from './analytics.js';
 import { DashboardSync, type SyncConfig } from './sync.js';
-import { AgentEvents, type AgentEventMap } from './events.js';
+import { AgentEvents, type AgentEventMap, type AnomalyMode } from './events.js';
 import { AnomalyDetector, type AnomalyDetectorConfig, type CostEstimate, type AnomalyResult } from './anomaly.js';
 import type { StorageAdapter } from './storage.js';
+
+/** Structured result of the last payment decision. */
+export interface LastDecision {
+  /** Whether the payment was allowed. */
+  allowed: boolean;
+  /** Which gate made the decision. */
+  gate: 'policy' | 'anomaly' | 'budget' | 'paid' | 'failed' | 'review';
+  /** Human-readable reason for the decision. */
+  reason: string;
+  /** URL that was evaluated. */
+  url: string;
+  /** Amount that was requested. */
+  amount: number;
+  /** HTTP status code seen (402 for challenges). */
+  statusCodeSeen: number;
+  /** ISO timestamp of the decision. */
+  timestamp: string;
+}
 
 /** x402 payment requirement from a 402 response. */
 export interface X402PaymentRequirement {
@@ -69,6 +87,13 @@ export interface AgentCFOConfig {
   warningThreshold?: number;
   /** Anomaly detection tuning. */
   anomaly?: AnomalyDetectorConfig;
+  /**
+   * Anomaly detection mode. Default: 'enforce'
+   * - 'enforce': anomalies block payment before it happens
+   * - 'review': anomalies are flagged but payment proceeds
+   * - 'off': no anomaly checking
+   */
+  anomalyMode?: AnomalyMode;
   /** Custom fetch implementation (defaults to globalThis.fetch). */
   fetchImpl?: typeof fetch;
 }
@@ -83,7 +108,12 @@ export class AgentCFO {
   private storage: StorageAdapter | null;
   private warningThreshold: number;
   private fetchImpl: typeof fetch;
-  /** Typed event emitter — subscribe to payment, budget, and velocity events. */
+  private anomalyMode: AnomalyMode;
+  /** Cumulative amount blocked by anomaly detection (proof metric). */
+  private _protectedSpend: number = 0;
+  /** Most recent payment decision — structured local signal for callers. */
+  private _lastDecision: LastDecision | null = null;
+  /** Typed event emitter — subscribe to payment, budget, and anomaly events. */
   public events: AgentEvents;
   /** Statistical anomaly detector (EWMA + Welford's + z-score). */
   private anomalyDetector: AnomalyDetector;
@@ -91,7 +121,14 @@ export class AgentCFO {
   constructor(config: AgentCFOConfig) {
     this.wallet = config.wallet;
     this.budget = new Budget(config.budget);
-    this.policy = new Policy(config.policy);
+    // Apply safety default: $2.00 maxPerRequest if user doesn't provide one
+    const effectivePolicy: PolicyRules = config.policy
+      ? { ...config.policy }
+      : {};
+    if (effectivePolicy.maxPerRequest === undefined) {
+      effectivePolicy.maxPerRequest = 2.00;
+    }
+    this.policy = new Policy(effectivePolicy);
     this.ledger = new Ledger();
     this.analytics = new Analytics(this.ledger);
     this.events = new AgentEvents();
@@ -102,6 +139,7 @@ export class AgentCFO {
     this.storage = config.storage ?? null;
     this.warningThreshold = config.warningThreshold ?? 0.8;
     this.fetchImpl = config.fetchImpl ?? globalThis.fetch;
+    this.anomalyMode = config.anomalyMode ?? 'enforce';
 
     // Load persisted ledger entries
     if (this.storage) {
@@ -154,21 +192,67 @@ export class AgentCFO {
     const currency = req.asset;
     const network = req.network;
 
-    // Check policy first
+    // 1. Check policy
     const policyDecision = this.policy.check({ url: urlStr, amount, currency, network });
     if (!policyDecision.allowed) {
-      this.logDenied(urlStr, amount.toFixed(2), currency, network, policyDecision.message ?? policyDecision.reason ?? 'policy_denied');
+      this._protectedSpend += amount;
+      const reason = policyDecision.message ?? policyDecision.reason ?? 'policy_denied';
+      this._lastDecision = { allowed: false, gate: 'policy', reason, url: urlStr, amount, statusCodeSeen: 402, timestamp: new Date().toISOString() };
+      this.logDenied(urlStr, amount.toFixed(2), currency, network, reason);
       return res;
     }
 
-    // Check budget
+    // 2. Check anomaly BEFORE payment (thesis: block overspend before irreversible money leaves)
+    if (this.anomalyMode !== 'off') {
+      const host = this.extractHost(urlStr);
+      const anomalyResult = this.anomalyDetector.observe(host, amount);
+
+      if (anomalyResult.isAnomaly) {
+        const anomalyData = {
+          isAnomaly: true,
+          zScore: anomalyResult.zScore,
+          baseline: anomalyResult.baseline,
+          multiplier: anomalyResult.multiplier,
+          mode: this.anomalyMode,
+        };
+
+        if (this.anomalyMode === 'enforce') {
+          // Block: do NOT pay. This is the core value proposition.
+          this._protectedSpend += amount;
+          const reason = `anomaly_blocked: ${anomalyResult.multiplier.toFixed(1)}x baseline ($${anomalyResult.baseline.toFixed(2)})`;
+          this._lastDecision = { allowed: false, gate: 'anomaly', reason, url: urlStr, amount, statusCodeSeen: 402, timestamp: new Date().toISOString() };
+          this.events.emit('anomaly:blocked', {
+            url: urlStr, amount, baseline: anomalyResult.baseline,
+            zScore: anomalyResult.zScore, multiplier: anomalyResult.multiplier, mode: 'enforce',
+          });
+          this.logDenied(urlStr, amount.toFixed(2), currency, network, reason);
+          // Attach anomaly context to the last ledger entry
+          const entries = this.ledger.all();
+          const lastEntry = entries[entries.length - 1];
+          if (lastEntry) (lastEntry as any).anomalyResult = anomalyData;
+          return res;
+        } else {
+          // Review: flag but proceed with payment
+          this._lastDecision = { allowed: true, gate: 'review', reason: `anomaly_flagged: ${anomalyResult.multiplier.toFixed(1)}x baseline ($${anomalyResult.baseline.toFixed(2)})`, url: urlStr, amount, statusCodeSeen: 402, timestamp: new Date().toISOString() };
+          this.events.emit('anomaly:flagged', {
+            url: urlStr, amount, baseline: anomalyResult.baseline,
+            zScore: anomalyResult.zScore, multiplier: anomalyResult.multiplier, mode: 'review',
+          });
+        }
+      }
+    }
+
+    // 3. Check budget
     const budgetDecision = this.budget.check(amount);
     if (!budgetDecision.allowed) {
-      this.logDenied(urlStr, amount.toFixed(2), currency, network, budgetDecision.message ?? budgetDecision.reason ?? 'budget_denied');
+      this._protectedSpend += amount;
+      const reason = budgetDecision.message ?? budgetDecision.reason ?? 'budget_denied';
+      this._lastDecision = { allowed: false, gate: 'budget', reason, url: urlStr, amount, statusCodeSeen: 402, timestamp: new Date().toISOString() };
+      this.logDenied(urlStr, amount.toFixed(2), currency, network, reason);
       return res;
     }
 
-    // Pay
+    // 4. Pay
     let paymentHeader: string;
     try {
       paymentHeader = await this.wallet.pay({
@@ -176,7 +260,9 @@ export class AgentCFO {
         challengeId: challenge.challengeId,
       });
     } catch (err) {
-      this.logFailed(urlStr, amount.toFixed(2), currency, network, `Wallet error: ${(err as Error).message}`);
+      const reason = `Wallet error: ${(err as Error).message}`;
+      this._lastDecision = { allowed: false, gate: 'failed', reason, url: urlStr, amount, statusCodeSeen: 402, timestamp: new Date().toISOString() };
+      this.logFailed(urlStr, amount.toFixed(2), currency, network, reason);
       return res;
     }
 
@@ -194,9 +280,12 @@ export class AgentCFO {
     if (paidRes.ok) {
       // Success — record the spend
       this.budget.record(amount);
+      this._lastDecision = { allowed: true, gate: 'paid', reason: 'Payment verified', url: urlStr, amount, statusCodeSeen: paidRes.status, timestamp: new Date().toISOString() };
       this.logPaid(urlStr, amount.toFixed(2), currency, network, 'Payment verified', paidRes.status, challenge.challengeId);
     } else {
-      this.logFailed(urlStr, amount.toFixed(2), currency, network, `Payment retry returned ${paidRes.status}`);
+      const reason = `Payment retry returned ${paidRes.status}`;
+      this._lastDecision = { allowed: false, gate: 'failed', reason, url: urlStr, amount, statusCodeSeen: paidRes.status, timestamp: new Date().toISOString() };
+      this.logFailed(urlStr, amount.toFixed(2), currency, network, reason);
     }
 
     return paidRes;
@@ -210,6 +299,16 @@ export class AgentCFO {
   /** Get spend analytics summary. */
   summary(): SpendSummary {
     return this.analytics.summary();
+  }
+
+  /**
+   * Get the most recent payment decision.
+   * Returns a structured object describing which gate decided, why, and for what URL/amount.
+   * Use this to distinguish "server 402" from "locally blocked by policy/anomaly/budget".
+   * Returns null before the first fetch() call.
+   */
+  lastDecision(): LastDecision | null {
+    return this._lastDecision;
   }
 
   /** Get the full audit ledger. */
@@ -277,22 +376,9 @@ export class AgentCFO {
     }
   }
 
-  /**
-   * Check for velocity anomalies using EWMA + z-score detection.
-   * Replaces the naive 2x-multiplier approach with proper statistical
-   * anomaly detection (Welford's online variance + z-score thresholds).
-   */
-  private checkVelocity(url: string, amount: number): void {
-    const host = this.extractHost(url);
-    const result = this.anomalyDetector.observe(host, amount);
-
-    if (result.isAnomaly) {
-      this.events.emit('velocity:spike', {
-        currentRate: amount,
-        averageRate: result.baseline,
-        multiplier: result.multiplier,
-      });
-    }
+  /** Get cumulative protected spend (amount blocked by anomaly + policy + budget). */
+  get protectedSpend(): number {
+    return Math.round(this._protectedSpend * 100) / 100;
   }
 
   // ---- Internal logging ----
@@ -308,7 +394,6 @@ export class AgentCFO {
     this.storage?.append(entry);
     this.events.emit('payment:success', { entry });
     this.checkBudgetWarnings();
-    this.checkVelocity(url, parseFloat(amount));
   }
 
   private logDenied(url: string, amount: string, currency: string, network: string, reason: string): void {

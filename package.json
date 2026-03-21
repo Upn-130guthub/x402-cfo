@@ -1,7 +1,7 @@
 {
   "name": "x402-cfo",
-  "version": "0.4.0",
-  "description": "Machine-native financial reasoning for autonomous x402 payments. Anomaly detection, multi-agent budget pools, cost-optimal routing, spend forecasting, and network intelligence. Zero dependencies.",
+  "version": "0.5.0",
+  "description": "Spend control plane for autonomous agent payments. Anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, event sink for future hosted integration, and proof metrics. Zero dependencies.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,7 +19,7 @@
   "scripts": {
     "build": "tsc",
     "demo": "tsx examples/demo.ts",
-    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts tests/anomaly.test.ts tests/pool.test.ts tests/router.test.ts tests/forecast.test.ts tests/network.test.ts",
+    "test": "node --test --import tsx tests/budget.test.ts tests/policy.test.ts tests/controller.test.ts tests/events.test.ts tests/storage.test.ts tests/advanced.test.ts tests/integrations.test.ts tests/anomaly.test.ts tests/pool.test.ts tests/router.test.ts tests/forecast.test.ts tests/network.test.ts tests/anomaly-mode.test.ts tests/sink.test.ts tests/fleet-policy.test.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -44,7 +44,9 @@
     "onchain",
     "base",
     "web3",
-    "defi"
+    "defi",
+    "spend-control",
+    "fleet"
   ],
   "author": "Tiguri GmbH",
   "homepage": "https://upn-130guthub.github.io/x402-cfo/",

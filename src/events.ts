@@ -10,6 +10,8 @@
 import type { LedgerEntry } from './ledger.js';
 import type { BudgetStatus } from './budget.js';
 
+export type AnomalyMode = 'enforce' | 'review' | 'off';
+
 export type AgentEventMap = {
   /** Fired when a payment is made successfully. */
   'payment:success': { entry: LedgerEntry };
@@ -21,8 +23,10 @@ export type AgentEventMap = {
   'budget:warning': { status: BudgetStatus; window: string; percentUsed: number };
   /** Fired when a budget limit is fully exhausted. */
   'budget:exhausted': { status: BudgetStatus; window: string };
-  /** Fired when spending velocity exceeds the historical average. */
-  'velocity:spike': { currentRate: number; averageRate: number; multiplier: number };
+  /** Fired when anomaly detection blocks a payment (enforce mode). */
+  'anomaly:blocked': { url: string; amount: number; baseline: number; zScore: number; multiplier: number; mode: 'enforce' };
+  /** Fired when anomaly is detected but payment proceeds (review mode). */
+  'anomaly:flagged': { url: string; amount: number; baseline: number; zScore: number; multiplier: number; mode: 'review' };
 };
 
 type EventHandler<T> = (data: T) => void;

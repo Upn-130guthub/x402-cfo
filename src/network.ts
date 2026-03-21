@@ -1,11 +1,11 @@
 /**
- * Network Intelligence — THE MOAT.
+ * Network Intelligence — shared pricing signals across agents.
  *
- * This module creates network effects: the more agents use x402-cfo,
- * the smarter every agent becomes. This is what makes the product
- * defensible — you can copy the code, but you can't copy the network.
+ * This module enables optional network effects: agents using x402-cfo
+ * can share anonymized pricing data, improving anomaly detection for
+ * all participants. Local-first: works entirely offline.
  *
- * How it works:
+ * The value scales with adoption. How it works:
  *   1. Each x402-cfo instance anonymously records pricing signals:
  *      - host, asset, network, amount (no wallet addresses, no agent IDs)
  *   2. Signals are batched and sent to a central intelligence endpoint

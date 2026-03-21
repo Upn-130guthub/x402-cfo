@@ -3,11 +3,11 @@
 [![npm](https://img.shields.io/npm/v/x402-cfo?style=flat-square&color=f5a623)](https://npmjs.com/package/x402-cfo)
 [![license](https://img.shields.io/npm/l/x402-cfo?style=flat-square)](LICENSE)
 [![zero deps](https://img.shields.io/badge/dependencies-0-10b981?style=flat-square)](package.json)
-[![tests](https://img.shields.io/badge/tests-107%2F107-10b981?style=flat-square)](#tests)
+[![tests](https://img.shields.io/badge/tests-131%2F131-10b981?style=flat-square)](#tests)
 
-**Machine-native financial reasoning for irreversible autonomous payments.**
+**Spend control plane for autonomous agent payments.**
 
-The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, predictive spend forecasting, and network intelligence. Works with [OpenClaw](https://openclawd.ai), [LangChain](https://langchain.com), [CrewAI](https://crewai.com), and [MCP](https://modelcontextprotocol.io).
+The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with pre-payment anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, event sink for future hosted integration, and proof metrics. Works with [LangChain](https://langchain.com), [CrewAI](https://crewai.com), and [MCP](https://modelcontextprotocol.io).
 
 Part of the [x402 protocol](https://www.x402.org/) ecosystem.
 
@@ -32,8 +32,8 @@ const agent = new AgentCFO({
 agent.events.on('budget:warning', ({ window, percentUsed }) => {
   console.warn(`⚠️  ${window} budget at ${(percentUsed * 100).toFixed(0)}%`);
 });
-agent.events.on('velocity:spike', ({ multiplier }) => {
-  console.warn(`🔥 Spending ${multiplier.toFixed(1)}x above average`);
+agent.events.on('anomaly:blocked', ({ amount, baseline, multiplier }) => {
+  console.warn(`🛡️ Blocked anomalous payment: $${amount} (${multiplier.toFixed(1)}x baseline $${baseline.toFixed(2)})`);
 });
 
 // Drop-in fetch replacement — handles 402 → policy → budget → pay → log
@@ -61,7 +61,7 @@ The x402 ecosystem gives agents wallets, facilitators, and API marketplaces — 
 | Cost policies (allowlist, blocklist, currency, network) | Basic | ❌ | ❌ | ✅ |
 | Spend analytics (burn rate, projections, top endpoints) | ❌ | ❌ | ❌ | ✅ |
 | Cost estimation from history | ❌ | ❌ | ❌ | ✅ |
-| Velocity spike detection | ❌ | ❌ | ❌ | ✅ |
+| Pre-payment anomaly blocking (enforce/review/off) | ❌ | ❌ | ❌ | ✅ |
 | Event-driven alerts | ❌ | ❌ | ❌ | ✅ |
 | Full audit ledger with export | ❌ | ❌ | ❌ | ✅ |
 | Framework adapters (LangChain, CrewAI, MCP) | ❌ | ❌ | ❌ | ✅ |
@@ -111,7 +111,8 @@ agent.events.on('payment:denied', ({ entry }) => { ... });
 agent.events.on('payment:failed', ({ entry }) => { ... });
 agent.events.on('budget:warning', ({ window, percentUsed }) => { ... });
 agent.events.on('budget:exhausted', ({ window }) => { ... });
-agent.events.on('velocity:spike', ({ multiplier }) => { ... });
+agent.events.on('anomaly:blocked', ({ amount, baseline, multiplier }) => { ... });
+agent.events.on('anomaly:flagged', ({ amount, baseline, multiplier }) => { ... });
 ```
 
 ### 💾 Persistent storage
@@ -398,7 +399,7 @@ export X402_MAX_PER_REQUEST=2.00
 Once installed, the agent will:
 - Route all x402 payments through budget + policy checks
 - Track burn rate and project daily spend
-- Alert on velocity spikes (spending 2x+ above average)
+- Block anomalous payments before money moves (enforce mode)
 - Block payments that violate policy rules
 - Maintain a full audit ledger across sessions
 
@@ -438,7 +439,7 @@ sync: { apiKey: 'your-api-key' }
 npm test
 ```
 
-107 tests across 18 suites: budget, policy, controller, events, storage, advanced, integrations, anomaly, pool, router, forecast, and network.
+131 tests across 24 suites: budget, policy, controller, events, storage, advanced, integrations, anomaly, pool, router, forecast, network, anomaly-mode, sink, and fleet-policy.
 
 ## License
 

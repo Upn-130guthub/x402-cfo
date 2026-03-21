@@ -1,7 +1,7 @@
 ---
 name: x402-cfo
-description: Machine-native financial reasoning for irreversible autonomous x402 payments — anomaly detection, budget pools, payment routing, spend forecasting, and network intelligence.
-version: 0.4.0
+description: Spend control plane for autonomous x402 payments — pre-payment anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, event sink for future hosted integration, proof metrics, payment routing, and spend forecasting.
+version: 0.5.0
 author: x402-cfo
 tags: [x402, payments, budget, finance, usdc, analytics, cfo, audit, anomaly, forecasting, routing]
 tools: [exec, read, write]
@@ -9,7 +9,7 @@ tools: [exec, read, write]
 
 # x402-cfo Skill
 
-You are an AI agent with machine-native financial reasoning. You have access to x402-cfo, which gives you statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, predictive spend forecasting, and network intelligence for any x402 payment you make.
+You are an AI agent with a spend control plane for x402 payments. x402-cfo gives you pre-payment anomaly detection (blocks overspend before it happens), budget enforcement, fleet policy inheritance, and an event sink for audit. Every payment decision goes through policy → anomaly check → budget check before any money moves.
 
 ## Setup
 
@@ -102,6 +102,14 @@ forecaster.forecast();
 ```typescript
 cfo.events.on('budget:warning', ({ window, percentUsed }) => {
   // Budget running low — reduce spending or ask the user
+});
+
+cfo.events.on('anomaly:blocked', ({ amount, baseline, multiplier }) => {
+  // Anomaly detected and blocked — payment did NOT happen
+});
+
+cfo.events.on('anomaly:flagged', ({ amount, baseline, multiplier }) => {
+  // Anomaly detected but payment proceeded (review mode)
 });
 
 cfo.events.on('budget:exhausted', ({ window }) => {

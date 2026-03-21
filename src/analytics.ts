@@ -25,6 +25,18 @@ export interface SpendSummary {
   topEndpoints: { url: string; spent: string; count: number }[];
   /** Spend breakdown by currency */
   byCurrency: Record<string, string>;
+  // ---- Proof metrics ----
+  /** Total denied request value (policy + budget + anomaly denials), in dollars.
+   *  This is the sum of quoted amounts from ALL denied transactions.
+   *  NOT deduplicated: if the same request is retried and denied 3 times, all 3 are counted.
+   *  Use as "denied transaction value", not "money saved". */
+  protectedSpend: string;
+  /** Number of payments blocked by anomaly detection */
+  anomalyBlocks: number;
+  /** Number of payments flagged by anomaly detection (review mode) */
+  anomalyFlags: number;
+  /** Number of payments denied by policy rules */
+  policyDenials: number;
 }
 
 function toCents(dollars: string): number {
@@ -86,6 +98,19 @@ export class Analytics {
       byCurrency[currency] = toDollars(cents);
     }
 
+    // Proof metrics
+    const protectedCents = denied.reduce((s, e) => s + toCents(e.amount), 0);
+    const anomalyBlocks = denied.filter(e => e.reason.startsWith('anomaly_blocked')).length;
+    const anomalyFlags = entries.filter(e =>
+      e.anomalyResult?.isAnomaly && e.anomalyResult?.mode === 'review'
+    ).length;
+    const policyDenials = denied.filter(e =>
+      e.reason.includes('allowlist') || e.reason.includes('blocklist') ||
+      e.reason.includes('max_per_request') || e.reason.includes('exceeds policy max') ||
+      e.reason.includes('currency') || e.reason.includes('not an allowed') ||
+      e.reason.includes('network_not_allowed') || e.reason === 'policy_denied'
+    ).length;
+
     return {
       totalSpent: toDollars(totalCents),
       totalTransactions: paid.length,
@@ -95,6 +120,10 @@ export class Analytics {
       projectedDaily: toDollars(Math.round(projectedDailyCents)),
       topEndpoints,
       byCurrency,
+      protectedSpend: toDollars(protectedCents),
+      anomalyBlocks,
+      anomalyFlags,
+      policyDenials,
     };
   }
 }

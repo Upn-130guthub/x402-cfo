@@ -1,6 +1,6 @@
 {
   "name": "x402-cfo",
-  "description": "Machine-native financial reasoning for autonomous x402 payments. Statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, predictive spend forecasting, and network intelligence. Drop-in fetch replacement with LangChain, CrewAI, MCP, and Express integrations. 107 tests, zero dependencies.",
+  "description": "Spend control plane for autonomous x402 payments. Pre-payment anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, event sink for future hosted integration, proof metrics. Drop-in fetch replacement with LangChain, CrewAI, MCP, and Express integrations. 131 tests, zero dependencies.",
   "logoUrl": "/logos/x402-cfo.png",
   "websiteUrl": "https://upn-130guthub.github.io/x402-cfo/",
   "githubUrl": "https://github.com/Upn-130guthub/x402-cfo",

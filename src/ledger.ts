@@ -28,6 +28,14 @@ export interface LedgerEntry {
   challengeId?: string;
   /** Transaction hash if payment was made */
   txHash?: string;
+  /** Anomaly detection result at decision time, if anomaly check ran */
+  anomalyResult?: {
+    isAnomaly: boolean;
+    zScore: number;
+    baseline: number;
+    multiplier: number;
+    mode: 'enforce' | 'review' | 'off';
+  };
 }
 
 export class Ledger {

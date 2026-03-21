@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>x402-cfo — Machine-Native Financial Reasoning for Irreversible Autonomous Payments</title>
-  <meta name="description" content="The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal payment routing, and network intelligence. 107 tests, zero dependencies." />
+  <title>x402-cfo — Spend Control Plane for Autonomous Agent Payments</title>
+  <meta name="description" content="The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with pre-payment anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, event sink for future hosted integration, and proof metrics. 131 tests, zero dependencies." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -276,10 +276,10 @@
 <!-- HERO -->
 <section class="hero">
   <div class="w">
-    <div class="hero-badge">Machine-Native Financial Reasoning</div>
+    <div class="hero-badge">Agent Spend Control Plane</div>
     <h1>Your AI agent<br/>needs a <span>CFO</span>.</h1>
-    <p class="hero-sub">The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with statistical anomaly detection, multi-agent budget pools, cost-optimal routing, predictive forecasting, and network intelligence.</p>
-    <p class="hero-tagline">107 tests · Zero dependencies · First financial nervous system for machines</p>
+    <p class="hero-sub">The x402 protocol handles HOW agents pay. x402-cfo handles WHETHER they should — with pre-payment anomaly detection (enforce/review/off), multi-agent budget pools with fleet policy inheritance, and proof metrics.</p>
+    <p class="hero-tagline">131 tests · Zero dependencies · Spend control plane for autonomous agents</p>
     <div class="hero-actions">
       <a href="https://npmjs.com/package/x402-cfo" class="btn btn-primary">npm install x402-cfo</a>
       <a href="https://github.com/Upn-130guthub/x402-cfo" class="btn btn-ghost">View on GitHub</a>
@@ -307,8 +307,8 @@
 agent.events.<span class="fn">on</span>(<span class="str">'budget:warning'</span>, ({ window, percentUsed }) =&gt; {
   console.<span class="fn">warn</span>(<span class="str">`⚠️ ${window} budget at ${(percentUsed * 100).toFixed(0)}%`</span>);
 });
-agent.events.<span class="fn">on</span>(<span class="str">'velocity:spike'</span>, ({ multiplier }) =&gt; {
-  console.<span class="fn">warn</span>(<span class="str">`🔥 Spending ${multiplier.toFixed(1)}x above average`</span>);
+agent.events.<span class="fn">on</span>(<span class="str">'anomaly:blocked'</span>, ({ amount, baseline, multiplier }) =&gt; {
+  console.<span class="fn">warn</span>(<span class="str">`🛡️ Blocked: $${amount} (${multiplier.toFixed(1)}× baseline $${baseline.toFixed(2)})`</span>);
 });
 
 <span class="cm">// Drop-in fetch — auto-handles 402 → policy → budget → pay → log</span>
@@ -588,8 +588,8 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 <section class="section" id="features">
   <div class="w">
     <div class="section-label">Features</div>
-    <h2>Machine-native financial reasoning.</h2>
-    <p class="section-sub">Zero runtime dependencies. 107 tests. The first financial nervous system built for machines, not adapted from human finance.</p>
+    <h2>Spend control for autonomous agents.</h2>
+    <p class="section-sub">Zero runtime dependencies. 131 tests. Pre-payment anomaly blocking, fleet policy inheritance, and proof metrics — the independent control plane for agent payments.</p>
     <div class="feat-grid">
       <div class="feat-card">
         <div class="feat-icon">🏦</div>
@@ -609,7 +609,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
       <div class="feat-card">
         <div class="feat-icon">⚡</div>
         <div class="feat-title">Event System</div>
-        <div class="feat-desc">Typed events for payment success, denial, budget warnings, and velocity spikes. Wire up Slack alerts or circuit breakers.</div>
+        <div class="feat-desc">Typed events for payment success, denial, budget warnings, anomaly blocks, and anomaly flags. Wire up Slack alerts or circuit breakers.</div>
       </div>
       <div class="feat-card">
         <div class="feat-icon">💾</div>
