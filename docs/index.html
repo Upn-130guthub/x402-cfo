@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -324,8 +324,8 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 <section class="section" id="demo">
   <div class="w" style="text-align:center">
     <div class="section-label">Live Demo</div>
-    <h2>See why your agent needs a CFO.</h2>
-    <p class="section-sub" style="margin-left:auto;margin-right:auto">Press play. Watch an AI agent pay for APIs, catch a 7× price spike, and block the payment before irreversible money leaves the wallet.</p>
+    <h2>See the control plane in action.</h2>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">Watch an AI agent make payments, hit a 40× price spike in enforce mode, then switch to review mode. Every decision has a structured reason — no mystery 402s.</p>
   </div>
   <div class="w">
     <div id="demo-container" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:20px 24px;">
@@ -340,21 +340,21 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
           <div id="d-session" style="font-size:22px;font-weight:800;color:#f5a623;margin-top:2px;">$0.00</div>
         </div>
         <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Protected Spend</div>
+          <div id="d-protected" style="font-size:22px;font-weight:800;color:var(--txt2);margin-top:2px;">$0.00</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
+          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Anomaly Mode</div>
+          <div id="d-mode" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">enforce</div>
+        </div>
+        <div style="background:var(--bg);border-radius:8px;padding:12px;">
           <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Budget Left</div>
-          <div id="d-hourly" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">$5.00</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Anomaly</div>
-          <div id="d-anomaly" style="font-size:22px;font-weight:800;color:var(--txt2);margin-top:2px;">—</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:12px;">
-          <div style="font-size:10px;font-weight:600;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Forecast</div>
-          <div id="d-forecast" style="font-size:22px;font-weight:800;color:var(--txt2);margin-top:2px;">—</div>
+          <div id="d-budget" style="font-size:22px;font-weight:800;color:#10b981;margin-top:2px;">$10.00</div>
         </div>
       </div>
       <!-- Transaction log -->
-      <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Decision Log</div>
-      <div id="d-log" style="background:var(--bg);border-radius:8px;padding:8px 12px;max-height:220px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--txt2);">
+      <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Decision Log <span style="font-weight:400;font-size:10px;color:var(--txt3);">— lastDecision() output</span></div>
+      <div id="d-log" style="background:var(--bg);border-radius:8px;padding:8px 12px;max-height:260px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.8;color:var(--txt2);">
         <div style="color:var(--txt3);">Press Start to begin the simulation…</div>
       </div>
       <!-- Controls -->
@@ -368,44 +368,64 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 
 <script>
 (function(){
-  // Scripted story — each step is an event in the agent's life
+  // v0.5 story — shows enforce, review, default cap, and lastDecision()
   const story = [
-    { path:'/v1/prices',       cost:0.25, narration:'Agent calls a market data API. x402-cfo checks policy ✓ and budget ✓ — approved.', type:'paid' },
-    { path:'/v1/sentiment',    cost:0.40, narration:'Agent fetches sentiment analysis. Cost is higher but within policy. Learning what normal prices look like…', type:'paid' },
-    { path:'/v1/gas-estimate', cost:0.12, narration:'Gas price estimate — cheap call at $0.12. x402-cfo is building a pricing baseline for this host.', type:'paid' },
-    { path:'/v1/defi-yields',  cost:0.35, narration:'DeFi yield data. After 4 calls, the anomaly detector knows the normal price range ($0.12–$0.40).', type:'paid' },
-    { path:'/v1/prices',       cost:0.22, narration:'Another price check. Normal range. Forecast: budget will last about 3 more minutes at this rate.', type:'paid' },
-    { path:'/v1/whale-alerts', cost:2.80, narration:'🛑 BLOCKED. This endpoint wants $2.80 — that\u2019s 7\u00d7 the normal price. x402 payments are irreversible, so x402-cfo refused to pay. $2.80 saved.', type:'anomaly-blocked' },
-    { path:'/v1/prices',       cost:0.20, narration:'Back to normal. The agent retried a different endpoint and got fair pricing. This is why machine reasoning matters — no human was in the loop.', type:'paid' },
-    { path:'/v1/sentiment',    cost:0.38, narration:'Sentiment analysis at $0.38 — well within the normal range. Anomaly detector confirms: ✓ Normal.', type:'paid' },
-    { path:'/v1/token-metrics', cost:0.30, narration:'Token metrics approved. Budget is running low now. Forecaster predicts ~1 minute of budget left at this rate.', type:'paid' },
-    { path:'/v1/defi-yields',  cost:0.35, narration:'DeFi yields at $0.35. Budget almost empty. But every payment that DID go through was at a fair price — that\u2019s the point.', type:'paid' },
-    { path:'/v1/nft-floor',    cost:0.55, narration:'Budget exhausted. This is just accounting — the real value was blocking that $2.80 overcharge 4 transactions ago.', type:'denied' },
+    { path:'/v1/prices',       cost:0.25, gate:'paid',    mode:'enforce',
+      narration:'Agent calls a market data API. Policy ✓ budget ✓ anomaly detector warming up — approved.' },
+    { path:'/v1/sentiment',    cost:0.40, gate:'paid',    mode:'enforce',
+      narration:'Sentiment analysis at $0.40. Building pricing baseline for this host… 2 of 5 warmup calls done.' },
+    { path:'/v1/gas-estimate', cost:0.12, gate:'paid',    mode:'enforce',
+      narration:'Gas estimate — cheap at $0.12. The anomaly detector is learning what normal prices look like.' },
+    { path:'/v1/defi-yields',  cost:0.35, gate:'paid',    mode:'enforce',
+      narration:'DeFi yields at $0.35. Baseline established. Anomaly detection is now armed — normal range: $0.12–$0.40.' },
+    { path:'/v1/prices',       cost:0.22, gate:'paid',    mode:'enforce',
+      narration:'Another price check at $0.22. Normal. Everything passing. Now watch what happens when a price spikes.' },
+
+    { path:'/v1/whale-alerts', cost:10.00, gate:'anomaly', mode:'enforce',
+      narration:'🛡️ ENFORCE → BLOCKED. $10.00 is 40× the baseline. wallet.pay() was never called. $10 protected.' },
+
+    { path:'/v1/prices',       cost:0.20, gate:'paid',    mode:'enforce',
+      narration:'Back to normal at $0.20. Agent retries a different endpoint — fair pricing. The block was invisible to the user.' },
+
+    { path:null, cost:0, gate:'mode-switch', mode:'review',
+      narration:'⚙️ Switching to REVIEW mode. Same detection logic, but spikes will be flagged, not blocked.' },
+
+    { path:'/v1/sentiment',    cost:0.38, gate:'paid',    mode:'review',
+      narration:'Sentiment at $0.38 — normal range. Review mode behaves identically for normal prices.' },
+
+    { path:'/v1/whale-alerts', cost:10.00, gate:'review',  mode:'review',
+      narration:'⚠️ REVIEW → FLAGGED. Same $10 spike, but payment goes through. Event emitted. Log shows the flag.' },
+
+    { path:'/v1/premium-data', cost:5.00, gate:'policy',  mode:'review',
+      narration:'🚫 POLICY → BLOCKED. $5.00 exceeds maxPerRequest cap of $2.00. Default safety cap caught it — no anomaly needed.' },
+
+    { path:'/v1/defi-yields',  cost:0.35, gate:'paid',    mode:'review',
+      narration:'Final call at $0.35. All decisions were structured. Every block has a gate, a reason, and a timestamp.' },
   ];
 
-  let timer=null, step=0, spent=0, budget=5;
+  let timer=null, step=0, spent=0, protectedAmt=0, budget=10, currentMode='enforce';
 
   window.startDemo = function(){
     if(timer) return;
     document.getElementById('d-start').textContent='⏸ Running…';
     document.getElementById('d-start').style.opacity='0.6';
     document.getElementById('d-log').innerHTML='';
-    spent=0; budget=5; step=0;
+    spent=0; protectedAmt=0; budget=10; step=0; currentMode='enforce';
     updateStats();
     runStep();
   };
 
   window.resetDemo = function(){
     clearTimeout(timer); timer=null;
-    spent=0; budget=5; step=0;
+    spent=0; protectedAmt=0; budget=10; step=0; currentMode='enforce';
     document.getElementById('d-session').textContent='$0.00';
     document.getElementById('d-session').style.color='#f5a623';
-    document.getElementById('d-hourly').textContent='$5.00';
-    document.getElementById('d-hourly').style.color='#10b981';
-    document.getElementById('d-anomaly').textContent='—';
-    document.getElementById('d-anomaly').style.color='var(--txt2)';
-    document.getElementById('d-forecast').textContent='—';
-    document.getElementById('d-forecast').style.color='var(--txt2)';
+    document.getElementById('d-protected').textContent='$0.00';
+    document.getElementById('d-protected').style.color='var(--txt2)';
+    document.getElementById('d-mode').textContent='enforce';
+    document.getElementById('d-mode').style.color='#10b981';
+    document.getElementById('d-budget').textContent='$10.00';
+    document.getElementById('d-budget').style.color='#10b981';
     document.getElementById('d-narration').innerHTML='👋 Press <strong style="margin:0 4px">Start</strong> to watch an AI agent make x402 payments.';
     document.getElementById('d-narration').style.borderColor='rgba(245,166,35,0.15)';
     document.getElementById('d-narration').style.background='rgba(245,166,35,0.06)';
@@ -417,6 +437,12 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 
   function runStep(){
     if(step >= story.length){
+      // Summary
+      const narEl = document.getElementById('d-narration');
+      narEl.textContent = '✅ Done. Spent $'+spent.toFixed(2)+', protected $'+protectedAmt.toFixed(2)+' in denied transaction value. Every decision was structured.';
+      narEl.style.borderColor='rgba(16,185,129,0.3)';
+      narEl.style.background='rgba(16,185,129,0.08)';
+      narEl.style.color='#10b981';
       document.getElementById('d-start').textContent='▶ Start';
       document.getElementById('d-start').style.opacity='1';
       return;
@@ -427,93 +453,83 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     // Update narration
     const narEl = document.getElementById('d-narration');
     narEl.textContent = s.narration;
-    if(s.type === 'anomaly-blocked'){
+    if(s.gate === 'anomaly' || s.gate === 'policy'){
       narEl.style.borderColor='rgba(249,115,22,0.4)';
       narEl.style.background='rgba(249,115,22,0.10)';
       narEl.style.color='#f97316';
-    } else if(s.type === 'denied'){
-      narEl.style.borderColor='rgba(239,68,68,0.3)';
-      narEl.style.background='rgba(239,68,68,0.08)';
-      narEl.style.color='#ef4444';
+    } else if(s.gate === 'review'){
+      narEl.style.borderColor='rgba(234,179,8,0.3)';
+      narEl.style.background='rgba(234,179,8,0.08)';
+      narEl.style.color='#eab308';
+    } else if(s.gate === 'mode-switch'){
+      narEl.style.borderColor='rgba(34,211,238,0.3)';
+      narEl.style.background='rgba(34,211,238,0.08)';
+      narEl.style.color='#22d3ee';
     } else {
       narEl.style.borderColor='rgba(245,166,35,0.15)';
       narEl.style.background='rgba(245,166,35,0.06)';
       narEl.style.color='var(--amber)';
     }
 
-    // Process payment
-    if(s.type === 'denied'){
-      addLog('denied', 'DENIED', s.path, s.cost, 'would exceed budget');
-    } else if(s.type === 'anomaly-blocked'){
-      addLog('blocked', 'BLOCKED', s.path, s.cost, 'price anomaly — 7× above baseline');
-      // Don't deduct — this is the intelligent act
+    // Process
+    if(s.gate === 'mode-switch'){
+      currentMode = s.mode;
+      addLog('mode', 'MODE', '→ '+s.mode, 0, 'anomaly detection mode switched');
+    } else if(s.gate === 'anomaly'){
+      protectedAmt += s.cost;
+      addLog('blocked', 'BLOCKED', s.path, s.cost, 'gate:anomaly — 40× baseline');
+    } else if(s.gate === 'policy'){
+      protectedAmt += s.cost;
+      addLog('blocked', 'BLOCKED', s.path, s.cost, 'gate:policy — exceeds $2.00 cap');
+    } else if(s.gate === 'review'){
+      spent += s.cost;
+      budget -= s.cost;
+      addLog('flagged', 'FLAGGED', s.path, s.cost, 'gate:review — anomaly flagged, payment allowed');
     } else {
       spent += s.cost;
       budget -= s.cost;
-      addLog('paid', 'PAID', s.path, s.cost, '');
+      addLog('paid', 'PAID', s.path, s.cost, 'gate:paid');
     }
+
+    // Update mode indicator
+    const mEl = document.getElementById('d-mode');
+    mEl.textContent = currentMode;
+    mEl.style.color = currentMode === 'enforce' ? '#10b981' : currentMode === 'review' ? '#eab308' : 'var(--txt2)';
 
     updateStats();
 
-    // Update anomaly indicator
-    const aEl = document.getElementById('d-anomaly');
-    if(step < 4){
-      aEl.textContent = 'Learning…';
-      aEl.style.color = 'var(--txt2)';
-    } else if(s.type === 'anomaly-blocked'){
-      aEl.textContent = '🛑 BLOCKED';
-      aEl.style.color = '#f97316';
-    } else {
-      aEl.textContent = '✓ Normal';
-      aEl.style.color = '#10b981';
-    }
-
-    // Update forecast
-    const fEl = document.getElementById('d-forecast');
-    if(step < 3){
-      fEl.textContent = '—';
-      fEl.style.color = 'var(--txt2)';
-    } else if(s.type === 'denied'){
-      fEl.textContent = '🛑 Empty';
-      fEl.style.color = '#ef4444';
-    } else if(s.type === 'anomaly-blocked'){
-      fEl.textContent = '$2.80 saved';
-      fEl.style.color = '#10b981';
-    } else if(budget < 1){
-      fEl.textContent = '⚠ <1 min';
-      fEl.style.color = '#ef4444';
-    } else {
-      const min = Math.max(0.5, budget / (spent / (step+1)) * 0.3).toFixed(1);
-      fEl.textContent = '~' + min + ' min';
-      fEl.style.color = budget < 2 ? '#f5a623' : '#22d3ee';
-    }
-
     step++;
-    timer = setTimeout(runStep, s.type === 'anomaly-blocked' ? 3500 : 2200);
+    const delay = s.gate === 'anomaly' || s.gate === 'policy' || s.gate === 'review' ? 3500
+                : s.gate === 'mode-switch' ? 2000 : 2200;
+    timer = setTimeout(runStep, delay);
   }
 
   function updateStats(){
     document.getElementById('d-session').textContent = '$'+spent.toFixed(2);
-    const bEl = document.getElementById('d-hourly');
+    const pEl = document.getElementById('d-protected');
+    pEl.textContent = '$'+protectedAmt.toFixed(2);
+    pEl.style.color = protectedAmt > 0 ? '#f97316' : 'var(--txt2)';
+    const bEl = document.getElementById('d-budget');
     bEl.textContent = '$'+Math.max(0,budget).toFixed(2);
-    bEl.style.color = budget < 1 ? '#ef4444' : budget < 2 ? '#f5a623' : '#10b981';
+    bEl.style.color = budget < 2 ? '#ef4444' : budget < 5 ? '#f5a623' : '#10b981';
   }
 
   function addLog(type, label, path, cost, reason){
     const log = document.getElementById('d-log');
-    const colors = {paid:'#10b981', denied:'#ef4444', blocked:'#f97316'};
+    const colors = {paid:'#10b981', blocked:'#f97316', flagged:'#eab308', mode:'#22d3ee'};
     const now = new Date().toLocaleTimeString();
+    const costStr = cost > 0 ? ' <span style="color:#f5a623;font-weight:600">$'+cost.toFixed(2)+'</span>' : '';
     const reasonStr = reason ? '  <span style="color:var(--txt3);font-style:italic">'+reason+'</span>' : '';
     const el = document.createElement('div');
     el.innerHTML = '<span style="color:var(--txt3)">'+now+'</span> '
       + '<span style="color:'+colors[type]+';font-weight:700">'+label+'</span> '
-      + '<span style="color:var(--txt)">'+path+'</span> '
-      + '<span style="color:#f5a623;font-weight:600">$'+cost.toFixed(2)+'</span>'
+      + '<span style="color:var(--txt)">'+path+'</span>'
+      + costStr
       + reasonStr;
     el.style.opacity='0';el.style.transition='opacity 0.4s';
     log.prepend(el);
     requestAnimationFrame(()=>el.style.opacity='1');
-    while(log.children.length > 12) log.removeChild(log.lastChild);
+    while(log.children.length > 14) log.removeChild(log.lastChild);
   }
 })();
 </script>
@@ -522,9 +538,9 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
 <section class="section" id="how">
   <div class="w">
     <div class="section-label">How it works</div>
-    <h2>Five-step decision pipeline.</h2>
-    <p class="section-sub">Every 402 response triggers a controlled decision process — not a blind payment.</p>
-    <div class="flow-grid">
+    <h2>Six-step decision pipeline.</h2>
+    <p class="section-sub">Every 402 response triggers a controlled decision process — not a blind payment. No money moves until every gate passes.</p>
+    <div class="flow-grid" style="grid-template-columns: repeat(6, 1fr);">
       <div class="flow-card">
         <div class="flow-num">1</div>
         <div class="flow-title">402 Received</div>
@@ -534,25 +550,31 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
       <div class="flow-card">
         <div class="flow-num">2</div>
         <div class="flow-title">Policy Check</div>
-        <div class="flow-desc">URL, currency, network rules</div>
+        <div class="flow-desc">URL, currency, network, amount cap</div>
+        <span class="flow-arrow">→</span>
+      </div>
+      <div class="flow-card" style="border-color: rgba(245,166,35,0.3);">
+        <div class="flow-num" style="background: rgba(249,115,22,0.15); color: #f97316;">3</div>
+        <div class="flow-title">Anomaly Gate</div>
+        <div class="flow-desc">EWMA + z-score. Enforce blocks, review flags.</div>
         <span class="flow-arrow">→</span>
       </div>
       <div class="flow-card">
-        <div class="flow-num">3</div>
+        <div class="flow-num">4</div>
         <div class="flow-title">Budget Check</div>
         <div class="flow-desc">Hourly, daily, session limits</div>
         <span class="flow-arrow">→</span>
       </div>
       <div class="flow-card">
-        <div class="flow-num">4</div>
+        <div class="flow-num">5</div>
         <div class="flow-title">Pay & Retry</div>
         <div class="flow-desc">Wallet signs, request retries</div>
         <span class="flow-arrow">→</span>
       </div>
       <div class="flow-card">
-        <div class="flow-num">5</div>
+        <div class="flow-num">6</div>
         <div class="flow-title">Log & Analyze</div>
-        <div class="flow-desc">Ledger + analytics updated</div>
+        <div class="flow-desc">Ledger + analytics + lastDecision()</div>
       </div>
     </div>
   </div>
@@ -563,7 +585,7 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
   <div class="w" style="text-align:center">
     <div class="section-label">Why x402-cfo</div>
     <h2>The ecosystem pays.<br/>Nobody watches the money.</h2>
-    <p class="section-sub" style="margin-left:auto;margin-right:auto">Coinbase AW, the Bazaar, and ClawRouter handle payments. x402-cfo is the missing financial layer.</p>
+    <p class="section-sub" style="margin-left:auto;margin-right:auto">Coinbase AW, the Bazaar, and ClawRouter handle payments. x402-cfo is the independent spend control layer.</p>
     <table class="compare-table">
       <thead>
         <tr><th></th><th>Coinbase AW</th><th>Bazaar</th><th>ClawRouter</th><th>x402-cfo</th></tr>
@@ -571,14 +593,16 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
       <tbody>
         <tr><td>Budget enforcement (multi-window)</td><td class="cross">Session only</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Cost policies (allowlist, blocklist)</td><td class="cross">Basic</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Statistical anomaly detection (EWMA + z-score)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Pre-payment anomaly detection (EWMA + z-score)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Anomaly modes: enforce / review / off</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Fleet policy inheritance (org defaults + per-agent overrides)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Structured caller feedback (lastDecision)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Proof metrics (protectedSpend, anomalyBlocks)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>Default safety cap ($2.00 maxPerRequest)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Multi-agent budget pools (game theory)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Cost-optimal payment routing</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Predictive spend forecasting (regression)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Network intelligence (pricing signals)</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
         <tr><td>Full audit ledger with export</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>LangChain / CrewAI / MCP / OpenClaw</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
-        <tr><td>Express middleware + live dashboard</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
+        <tr><td>LangChain / CrewAI / MCP integrations</td><td class="cross">—</td><td class="cross">—</td><td class="cross">—</td><td class="check">✓</td></tr>
       </tbody>
     </table>
   </div>
@@ -589,67 +613,67 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
   <div class="w">
     <div class="section-label">Features</div>
     <h2>Spend control for autonomous agents.</h2>
-    <p class="section-sub">Zero runtime dependencies. 131 tests. Pre-payment anomaly blocking, fleet policy inheritance, and proof metrics — the independent control plane for agent payments.</p>
+    <p class="section-sub">Zero runtime dependencies. 131 tests. Pre-payment anomaly blocking, fleet policy inheritance, and proof metrics.</p>
     <div class="feat-grid">
+      <div class="feat-card" style="border-color: rgba(249,115,22,0.3);">
+        <div class="feat-icon">&#x1F6E1;&#xFE0F;</div>
+        <div class="feat-title">Pre-Payment Anomaly Detection</div>
+        <div class="feat-desc">EWMA + Welford's z-score. Three modes: <strong>enforce</strong> blocks, <strong>review</strong> flags, <strong>off</strong> bypasses. wallet.pay() never called during a block.</div>
+      </div>
+      <div class="feat-card" style="border-color: rgba(245,166,35,0.2);">
+        <div class="feat-icon">&#x1F4E1;</div>
+        <div class="feat-title">lastDecision()</div>
+        <div class="feat-desc">Structured caller feedback. Returns { gate, reason, url, amount }. Distinguishes server 402 from locally blocked.</div>
+      </div>
+      <div class="feat-card" style="border-color: rgba(245,166,35,0.2);">
+        <div class="feat-icon">&#x1F465;</div>
+        <div class="feat-title">Fleet Policy Inheritance</div>
+        <div class="feat-desc">Org-level defaults with per-agent overrides. Scalars replace, arrays replace entirely. checkPolicy() enforces the merge.</div>
+      </div>
       <div class="feat-card">
-        <div class="feat-icon">🏦</div>
+        <div class="feat-icon">&#x1F4CA;</div>
+        <div class="feat-title">Proof Metrics</div>
+        <div class="feat-desc">protectedSpend, anomalyBlocks, anomalyFlags, policyDenials. Ledger-derived. Not deduplicated across retries.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">&#x1F512;</div>
+        <div class="feat-title">Default Safety Cap</div>
+        <div class="feat-desc">$2.00 maxPerRequest when you don't set one. Protects during anomaly warm-up. Easy to override.</div>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon">&#x1F3E6;</div>
         <div class="feat-title">Budget Enforcement</div>
-        <div class="feat-desc">Per-request, hourly, daily, and session spend limits with rolling-window tracking.</div>
+        <div class="feat-desc">Per-request, hourly, daily, and session limits. Multi-agent pools with game-theoretic rebalancing.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">📋</div>
+        <div class="feat-icon">&#x1F4CB;</div>
         <div class="feat-title">Cost Policies</div>
-        <div class="feat-desc">Declarative rules: URL allowlists, blocklists, currency restrictions, and network filters.</div>
+        <div class="feat-desc">URL allowlists, blocklists, currency restrictions, network filters, and per-request caps.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">📒</div>
+        <div class="feat-icon">&#x1F4D2;</div>
         <div class="feat-title">Audit Ledger</div>
-        <div class="feat-desc">Every payment decision logged with timestamp, amount, URL, status, and reason. Exportable.</div>
+        <div class="feat-desc">Every decision logged with timestamp, amount, URL, status, reason, and anomaly context. JSON + CSV export.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">⚡</div>
+        <div class="feat-icon">&#x26A1;</div>
         <div class="feat-title">Event System</div>
-        <div class="feat-desc">Typed events for payment success, denial, budget warnings, anomaly blocks, and anomaly flags. Wire up Slack alerts or circuit breakers.</div>
+        <div class="feat-desc">Typed events: payment:success, payment:denied, budget:warning, anomaly:blocked, anomaly:flagged.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">💾</div>
-        <div class="feat-title">Persistent Storage</div>
-        <div class="feat-desc">Ledger survives restarts. Ships with JsonFileStorage, pluggable StorageAdapter for SQLite or Redis.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🧠</div>
-        <div class="feat-title">Anomaly Detection</div>
-        <div class="feat-desc">EWMA + Welford’s online algorithm. Per-host z-score anomaly detection with cooldown suppression and warmup phase.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">👥</div>
-        <div class="feat-title">Multi-Agent Budget Pools</div>
-        <div class="feat-desc">Share budgets across agent fleets. Equal/weighted/priority allocation with game-theoretic rebalancing from idle agents.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🛤️</div>
+        <div class="feat-icon">&#x1F6E4;&#xFE0F;</div>
         <div class="feat-title">Payment Routing</div>
-        <div class="feat-desc">When x402 offers multiple payment options, automatically pick the cheapest by asset price, network fees, and settlement speed.</div>
+        <div class="feat-desc">When x402 offers multiple options, pick the cheapest by asset price, network fees, and settlement speed.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">📈</div>
-        <div class="feat-title">Spend Forecasting</div>
-        <div class="feat-desc">Online linear regression predicts budget exhaustion ETA with confidence interval. Detects accelerating, steady, or decelerating spend.</div>
+        <div class="feat-icon">&#x1F4E1;</div>
+        <div class="feat-title">Event Sink</div>
+        <div class="feat-desc">Structured event log with circular buffer. Transport stub for future hosted integration.</div>
       </div>
       <div class="feat-card">
-        <div class="feat-icon">🌐</div>
-        <div class="feat-title">Network Intelligence</div>
-        <div class="feat-desc">Opt-in anonymized pricing signals create network effects. More users = smarter agents. Detect anomalies across the entire network.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">📊</div>
-        <div class="feat-title">Spend Analytics</div>
-        <div class="feat-desc">Burn rate, projected daily spend, percentile-based cost estimation, top endpoints by cost, and currency breakdown.</div>
-      </div>
-      <div class="feat-card">
-        <div class="feat-icon">🖥️</div>
-        <div class="feat-title">Express Dashboard</div>
-        <div class="feat-desc">One-line middleware for Express. Includes a live dashboard at /_cfo/html with spend cards, transaction table, and auto-refresh.</div>
+        <div class="feat-icon">&#x1F50C;</div>
+        <div class="feat-title">Framework Integrations</div>
+        <div class="feat-desc">Drop-in tools for LangChain, CrewAI, MCP, and Express middleware with live dashboard.</div>
       </div>
     </div>
   </div>
@@ -663,41 +687,45 @@ agent.<span class="fn">estimateCost</span>(<span class="str">'https://api.chaind
     <p class="section-sub" style="margin-left:auto;margin-right:auto">The npm package works standalone forever. The dashboard gives you centralized control.</p>
     <div class="price-grid">
       <div class="price-card">
-        <div class="price-tier">Free</div>
+        <div class="price-tier">Open Source</div>
         <div class="price-amount">$0<span>/forever</span></div>
-        <div class="price-desc">For solo developers</div>
+        <div class="price-desc">For developers and solo agents</div>
         <ul class="price-list">
           <li>Unlimited agents</li>
           <li>Budget enforcement</li>
-          <li>Cost policies</li>
-          <li>Local audit ledger</li>
-          <li>JSON + CSV export</li>
+          <li>Cost policies + default safety cap</li>
+          <li>Pre-payment anomaly detection (enforce/review/off)</li>
+          <li>Fleet policy inheritance</li>
+          <li>Proof metrics + lastDecision()</li>
+          <li>Local audit ledger + JSON/CSV export</li>
+          <li>Event sink (local buffer)</li>
         </ul>
         <a href="https://npmjs.com/package/x402-cfo" class="btn btn-ghost" style="width:100%;text-align:center">npm install</a>
       </div>
       <div class="price-card featured">
-        <div class="price-tier">Pro</div>
-        <div class="price-amount">$49<span>/mo</span></div>
-        <div class="price-desc">For teams running agents</div>
+        <div class="price-tier">Hosted (Coming Soon)</div>
+        <div class="price-amount">TBD<span>/mo</span></div>
+        <div class="price-desc">For teams running agent fleets</div>
         <ul class="price-list">
-          <li>Everything in Free</li>
-          <li>Dashboard — all agents in one view</li>
-          <li>Alerts when budgets hit 80%</li>
-          <li>30-day ledger history</li>
-          <li>Up to 10 agents</li>
+          <li>Everything in Open Source</li>
+          <li>Persistent audit trail (durable storage)</li>
+          <li>Fleet admin dashboard — all agents in one view</li>
+          <li>RBAC and team access controls</li>
+          <li>Alerting (budget thresholds, anomaly spikes)</li>
+          <li>Remote policy overrides</li>
         </ul>
         <a href="https://github.com/Upn-130guthub/x402-cfo/issues" class="btn btn-primary" style="width:100%;text-align:center">Join the waitlist →</a>
       </div>
       <div class="price-card">
-        <div class="price-tier">Scale</div>
-        <div class="price-amount">$199<span>/mo</span></div>
-        <div class="price-desc">For enterprises</div>
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">Custom</div>
+        <div class="price-desc">For regulated environments</div>
         <ul class="price-list">
-          <li>Everything in Pro</li>
-          <li>Kill switch — freeze spend remotely</li>
-          <li>Compliance audit reports</li>
-          <li>Unlimited agents</li>
-          <li>1-year ledger history</li>
+          <li>Everything in Hosted</li>
+          <li>Compliance-grade audit reports</li>
+          <li>SSO / SAML integration</li>
+          <li>Custom retention policies</li>
+          <li>SLA and priority support</li>
         </ul>
         <a href="https://github.com/Upn-130guthub/x402-cfo/issues" class="btn btn-ghost" style="width:100%;text-align:center">Contact us →</a>
       </div>
