@@ -26,9 +26,11 @@ describe('AnomalyDetector', () => {
   describe('normal operation', () => {
     it('should not flag consistent spending as anomalous', () => {
       const detector = new AnomalyDetector();
-      // Build baseline with consistent values
-      for (let i = 0; i < 20; i++) {
-        const result = detector.observe('api.test.com', 0.25 + Math.random() * 0.05);
+      // Build baseline with consistent deterministic values (no Math.random)
+      const values = [0.25, 0.27, 0.26, 0.28, 0.25, 0.27, 0.26, 0.28, 0.25, 0.27,
+                      0.26, 0.28, 0.25, 0.27, 0.26, 0.28, 0.25, 0.27, 0.26, 0.28];
+      for (let i = 0; i < values.length; i++) {
+        const result = detector.observe('api.test.com', values[i]);
         // After warmup, consistent values should never be anomalous
         if (i >= 5) {
           assert.equal(result.isAnomaly, false, `consistent observation ${i} flagged as anomaly`);
